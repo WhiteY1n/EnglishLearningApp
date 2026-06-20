@@ -1,5 +1,7 @@
 package com.vu.englishlearningapp.core.network
 
+import com.vu.englishlearningapp.BuildConfig
+
 import com.vu.englishlearningapp.core.session.TokenManager
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -13,8 +15,9 @@ import java.util.concurrent.TimeUnit
  */
 object RetrofitClient {
 
-    // Base URL for the Android emulator to reach the host machine's localhost
-    private const val BASE_URL = "http://10.0.2.2:8000/"
+    // Base URL được đọc từ local.properties thông qua BuildConfig
+    // Mỗi máy tự cấu hình IP trong file local.properties (không push lên Git)
+    private const val BASE_URL = BuildConfig.API_BASE_URL
 
     /**
      * Creates a configured Retrofit instance.

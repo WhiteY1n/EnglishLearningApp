@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Bolt
@@ -46,7 +45,9 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onLoggedOut: () -> Unit
+    onLoggedOut: () -> Unit,
+    onFlashcardsClick: () -> Unit = {},
+    onQuizzesClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -148,12 +149,14 @@ fun HomeScreen(
                         title = "Flashcards",
                         description = "Learn new words",
                         icon = Icons.Default.Style,
+                        onClick = onFlashcardsClick,
                         modifier = Modifier.weight(1f)
                     )
                     FeatureCard(
                         title = "Quizzes",
                         description = "Test your knowledge",
                         icon = Icons.Default.Quiz,
+                        onClick = onQuizzesClick,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -168,12 +171,14 @@ fun HomeScreen(
                         title = "Profile",
                         description = "Your account",
                         icon = Icons.Default.Person,
+                        onClick = { /* TODO: Navigate to profile screen */ },
                         modifier = Modifier.weight(1f)
                     )
                     FeatureCard(
                         title = "Practice",
                         description = "Daily exercises",
                         icon = Icons.Default.Bolt,
+                        onClick = { /* TODO: Navigate to practice screen */ },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -183,17 +188,19 @@ fun HomeScreen(
 }
 
 /**
- * A card representing a feature/module on the Home screen.
+ * A clickable card representing a feature/module on the Home screen.
  */
 @Composable
 private fun FeatureCard(
     title: String,
     description: String,
     icon: ImageVector,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier.height(120.dp),
+        onClick = onClick,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )

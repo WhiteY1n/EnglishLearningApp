@@ -7,4 +7,17 @@ package com.vu.englishlearningapp.ui.navigation
 sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Home : Screen("home")
+
+    // Flashcard flow
+    data object FlashcardCollections : Screen("flashcard_collections")
+    data object FlashcardStudy : Screen("flashcard_study/{collectionId}") {
+        fun createRoute(collectionId: Int) = "flashcard_study/$collectionId"
+    }
+
+    // Quiz flow
+    data object QuizList : Screen("quiz_list")
+    data object QuizTaking : Screen("quiz_taking/{testId}") {
+        fun createRoute(testId: Int) = "quiz_taking/$testId"
+    }
+    data object QuizResult : Screen("quiz_result")
 }
