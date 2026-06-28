@@ -11,6 +11,9 @@ import androidx.navigation.navArgument
 import com.vu.englishlearningapp.di.AppContainer
 import com.vu.englishlearningapp.ui.screens.auth.LoginScreen
 import com.vu.englishlearningapp.ui.screens.auth.LoginViewModel
+import com.vu.englishlearningapp.ui.screens.admin.dashboard.AdminDashboardScreen
+import com.vu.englishlearningapp.ui.screens.admin.dashboard.DashboardViewModel
+import com.vu.englishlearningapp.ui.screens.admin.users.UserManagementScreen
 import com.vu.englishlearningapp.ui.screens.admin.collection.CollectionDetailScreen
 import com.vu.englishlearningapp.ui.screens.admin.collection.CollectionDetailViewModel
 import com.vu.englishlearningapp.ui.screens.admin.collection.CollectionListScreen
@@ -89,8 +92,8 @@ fun AppNavGraph(
                 onProfileClick = {
                     navController.navigate(Screen.Profile.route)
                 },
-                onAdminCollectionClick = {
-                    navController.navigate(Screen.AdminCollectionList.route)
+                onAdminDashboardClick = {
+                    navController.navigate(Screen.AdminDashboard.route)
                 }
             )
         }
@@ -235,7 +238,43 @@ fun AppNavGraph(
             )
         }
 
-        // --- Admin Collection Management Flow ---
+        // --- Admin Flow ---
+
+        composable(Screen.AdminDashboard.route) {
+            val vm: DashboardViewModel = viewModel(
+                factory = DashboardViewModel.Factory()
+            )
+            // Pre-fill user state from HomeScreen / TokenManager logic if available
+            // Alternatively, we get the current user from authRepository, but we can pass it down via HomeViewModel state earlier,
+            // or we just fetch it from TokenManager. Here we can let DashboardViewModel be simple.
+            // For now, since user info is in TokenManager or AuthRepo, let's inject it or leave it.
+            // Actually, HomeViewModel has the user. We can retrieve it if we need.
+            val homeEntry = navController.previousBackStackEntry
+            val homeVm = homeEntry?.let {
+                try {
+                    ViewModelProvider(it, HomeViewModel.Factory(
+                        appContainer.authRepository
+                    ))[HomeViewModel::class.java]
+                } catch (_: Exception) { null }
+            }
+            homeVm?.uiState?.value?.user?.let { user ->
+                vm.setUser(user)
+            }
+
+            AdminDashboardScreen(
+                viewModel = vm,
+                onNavigateToRoute = { route ->
+                    navController.navigate(route)
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.AdminUserManagement.route) {
+            UserManagementScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
 
         composable(Screen.AdminCollectionList.route) {
             val vm: CollectionListViewModel = viewModel(

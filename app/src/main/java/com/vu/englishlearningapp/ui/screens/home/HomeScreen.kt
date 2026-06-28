@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.Style
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -49,7 +50,7 @@ fun HomeScreen(
     onFlashcardsClick: () -> Unit = {},
     onQuizzesClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
-    onAdminCollectionClick: () -> Unit = {}
+    onAdminDashboardClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -203,13 +204,13 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         FeatureCard(
-                            title = "Collections",
-                            description = "Manage flashcards",
-                            icon = Icons.Default.Style,
-                            onClick = onAdminCollectionClick,
+                            title = "Admin Dashboard",
+                            description = "System management",
+                            icon = Icons.Default.Settings,
+                            onClick = onAdminDashboardClick,
                             modifier = Modifier.weight(1f)
                         )
-                        // Empty spacer for consistent 2-column layout if only 1 item exists
+                        // Empty spacer for consistent 2-column layout
                         Spacer(modifier = Modifier.weight(1f))
                     }
                 }
