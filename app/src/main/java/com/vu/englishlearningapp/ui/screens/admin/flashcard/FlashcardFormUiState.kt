@@ -1,0 +1,19 @@
+package com.vu.englishlearningapp.ui.screens.admin.flashcard
+
+import com.vu.englishlearningapp.data.remote.dto.flashcard.WordTypeDto
+
+data class FlashcardFormUiState(
+    val originalWord: String = "",
+    val translatedWord: String = "",
+    val selectedWordTypeId: Int? = null,
+    val wordTypes: List<WordTypeDto> = emptyList(),
+    val isLoadingWordTypes: Boolean = false,
+    val isLoadingFlashcard: Boolean = false,
+    val isSaving: Boolean = false,
+    val isSaveSuccess: Boolean = false,
+    val validationErrors: Map<String, String> = emptyMap(),
+    val errorMessage: String? = null
+) {
+    val selectedWordType: WordTypeDto?
+        get() = wordTypes.find { it.id == selectedWordTypeId }
+}

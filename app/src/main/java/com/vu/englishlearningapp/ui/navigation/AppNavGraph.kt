@@ -21,6 +21,8 @@ import com.vu.englishlearningapp.ui.screens.admin.collection.CollectionListViewM
 import com.vu.englishlearningapp.ui.screens.admin.collection.CreateCollectionScreen
 import com.vu.englishlearningapp.ui.screens.admin.collection.CreateEditCollectionViewModel
 import com.vu.englishlearningapp.ui.screens.admin.collection.EditCollectionScreen
+import com.vu.englishlearningapp.ui.screens.admin.flashcard.FlashcardFormScreen
+import com.vu.englishlearningapp.ui.screens.admin.flashcard.FlashcardFormViewModel
 import com.vu.englishlearningapp.ui.screens.flashcard.FlashcardCollectionListScreen
 import com.vu.englishlearningapp.ui.screens.flashcard.FlashcardCollectionListViewModel
 import com.vu.englishlearningapp.ui.screens.flashcard.FlashcardStudyScreen
@@ -298,12 +300,18 @@ fun AppNavGraph(
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getInt("id") ?: 0
             val vm: CollectionDetailViewModel = viewModel(
-                factory = CollectionDetailViewModel.Factory(appContainer.collectionRepository, id)
+                factory = CollectionDetailViewModel.Factory(appContainer.collectionRepository, appContainer.flashcardRepository, id)
             )
             CollectionDetailScreen(
                 viewModel = vm,
                 onEditClick = { collectionId ->
                     navController.navigate(Screen.AdminEditCollection.createRoute(collectionId))
+                },
+                onCreateFlashcardClick = { collectionId ->
+                    navController.navigate(Screen.AdminFlashcardCreate.createRoute(collectionId))
+                },
+                onEditFlashcardClick = { collectionId, flashcardId ->
+                    navController.navigate(Screen.AdminFlashcardEdit.createRoute(collectionId, flashcardId))
                 },
                 onDeleteSuccess = {
                     navController.popBackStack()
@@ -343,6 +351,46 @@ fun AppNavGraph(
                 onCancelClick = {
                     navController.popBackStack()
                 }
+            )
+        }
+
+        composable(
+            route = Screen.AdminFlashcardCreate.route,
+            arguments = listOf(navArgument("collectionId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val collectionId = backStackEntry.arguments?.getInt("collectionId") ?: 0
+            val vm: FlashcardFormViewModel = viewModel(
+                factory = FlashcardFormViewModel.Factory(appContainer.flashcardRepository, collectionId, null)
+            )
+            FlashcardFormScreen(
+                viewModel = vm,
+                isEditMode = false,
+                onSaveSuccess = {
+                    navController.popBackStack()
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.AdminFlashcardEdit.route,
+            arguments = listOf(
+                navArgument("collectionId") { type = NavType.IntType },
+                navArgument("flashcardId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val collectionId = backStackEntry.arguments?.getInt("collectionId") ?: 0
+            val flashcardId = backStackEntry.arguments?.getInt("flashcardId") ?: 0
+            val vm: FlashcardFormViewModel = viewModel(
+                factory = FlashcardFormViewModel.Factory(appContainer.flashcardRepository, collectionId, flashcardId)
+            )
+            FlashcardFormScreen(
+                viewModel = vm,
+                isEditMode = true,
+                onSaveSuccess = {
+                    navController.popBackStack()
+                },
+                onBackClick = { navController.popBackStack() }
             )
         }
     }

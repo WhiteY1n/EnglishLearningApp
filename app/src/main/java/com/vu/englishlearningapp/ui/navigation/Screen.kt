@@ -36,4 +36,10 @@ sealed class Screen(val route: String) {
     data object AdminEditCollection : Screen("admin_edit_collection/{id}") {
         fun createRoute(id: Int) = "admin_edit_collection/$id"
     }
+    data object AdminFlashcardCreate : Screen("admin_flashcard_create/{collectionId}") {
+        fun createRoute(collectionId: Int) = "admin_flashcard_create/$collectionId"
+    }
+    data object AdminFlashcardEdit : Screen("admin_flashcard_edit/{collectionId}/{flashcardId}") {
+        fun createRoute(collectionId: Int, flashcardId: Int) = "admin_flashcard_edit/$collectionId/$flashcardId"
+    }
 }

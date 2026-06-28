@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
@@ -25,6 +26,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,12 +55,15 @@ import androidx.compose.ui.unit.dp
 fun CollectionDetailScreen(
     viewModel: CollectionDetailViewModel,
     onEditClick: (Int) -> Unit,
+    onCreateFlashcardClick: (Int) -> Unit,
+    onEditFlashcardClick: (collectionId: Int, flashcardId: Int) -> Unit,
     onDeleteSuccess: () -> Unit,
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var flashcardIdToDelete by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(uiState.isDeleteSuccess) {
         if (uiState.isDeleteSuccess) {
@@ -136,8 +141,33 @@ fun CollectionDetailScreen(
                 )
             )
         },
+        floatingActionButton = {
+            uiState.collection?.let { collection ->
+                FloatingActionButton(
+                    onClick = { onCreateFlashcardClick(collection.id) },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Flashcard")
+                }
+            }
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
+        
+        flashcardIdToDelete?.let { flashcardId ->
+            com.vu.englishlearningapp.ui.screens.admin.flashcard.DeleteConfirmationDialog(
+                title = "Delete Flashcard?",
+                message = "Are you sure you want to delete this flashcard? This action cannot be undone.",
+                isDeleting = uiState.isLoading,
+                onConfirm = {
+                    viewModel.deleteFlashcard(flashcardId)
+                    flashcardIdToDelete = null
+                },
+                onDismiss = { flashcardIdToDelete = null }
+            )
+        }
+
         when {
             uiState.isLoading && uiState.collection == null -> {
                 Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
@@ -220,31 +250,11 @@ fun CollectionDetailScreen(
                         }
                     } else {
                         items(collection.flashcards) { flashcard ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = flashcard.originalWord,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Text(
-                                        text = flashcard.translatedWord,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f),
-                                        modifier = Modifier.weight(1f),
-                                        textAlign = androidx.compose.ui.text.style.TextAlign.End
-                                    )
-                                }
-                            }
+                            com.vu.englishlearningapp.ui.screens.admin.flashcard.FlashcardCard(
+                                flashcard = flashcard,
+                                onEditClick = { onEditFlashcardClick(collection.id, flashcard.id) },
+                                onDeleteClick = { flashcardIdToDelete = flashcard.id }
+                            )
                         }
                     }
                 }
