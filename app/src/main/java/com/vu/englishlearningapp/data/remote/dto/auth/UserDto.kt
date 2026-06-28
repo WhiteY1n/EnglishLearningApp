@@ -16,7 +16,8 @@ data class UserDto(
     @SerializedName("avatar") val avatar: String?,
     @SerializedName("status") val status: Int,
     @SerializedName("is_super_admin") val isSuperAdmin: Boolean,
-    @SerializedName("created_at") val createdAt: String,
-    @SerializedName("updated_at") val updatedAt: String,
-    @SerializedName("deleted_at") val deletedAt: String?
+    @SerializedName("permissions") val permissions: List<String> = emptyList(),
+    @SerializedName("created_at") val createdAt: String? = null,
+    @SerializedName("updated_at") val updatedAt: String? = null,
+    @SerializedName("deleted_at") val deletedAt: String? = null
 )

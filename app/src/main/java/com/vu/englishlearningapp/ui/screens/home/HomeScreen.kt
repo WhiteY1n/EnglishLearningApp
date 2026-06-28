@@ -47,7 +47,8 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onLoggedOut: () -> Unit,
     onFlashcardsClick: () -> Unit = {},
-    onQuizzesClick: () -> Unit = {}
+    onQuizzesClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -171,7 +172,7 @@ fun HomeScreen(
                         title = "Profile",
                         description = "Your account",
                         icon = Icons.Default.Person,
-                        onClick = { /* TODO: Navigate to profile screen */ },
+                        onClick = onProfileClick,
                         modifier = Modifier.weight(1f)
                     )
                     FeatureCard(

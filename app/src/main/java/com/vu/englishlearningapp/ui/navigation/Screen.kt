@@ -20,4 +20,8 @@ sealed class Screen(val route: String) {
         fun createRoute(testId: Int) = "quiz_taking/$testId"
     }
     data object QuizResult : Screen("quiz_result")
+
+    // Profile flow
+    data object Profile : Screen("profile")
+    data object EditProfile : Screen("edit_profile")
 }

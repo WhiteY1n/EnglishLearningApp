@@ -5,9 +5,11 @@ import com.vu.englishlearningapp.core.network.RetrofitClient
 import com.vu.englishlearningapp.core.session.TokenManager
 import com.vu.englishlearningapp.data.remote.api.AuthApi
 import com.vu.englishlearningapp.data.remote.api.FlashcardApi
+import com.vu.englishlearningapp.data.remote.api.ProfileApi
 import com.vu.englishlearningapp.data.remote.api.QuizApi
 import com.vu.englishlearningapp.data.repository.AuthRepository
 import com.vu.englishlearningapp.data.repository.FlashcardRepository
+import com.vu.englishlearningapp.data.repository.ProfileRepository
 import com.vu.englishlearningapp.data.repository.QuizRepository
 
 /**
@@ -29,9 +31,11 @@ class AppContainer(context: Context) {
     val authApi: AuthApi = retrofit.create(AuthApi::class.java)
     val flashcardApi: FlashcardApi = retrofit.create(FlashcardApi::class.java)
     val quizApi: QuizApi = retrofit.create(QuizApi::class.java)
+    val profileApi: ProfileApi = retrofit.create(ProfileApi::class.java)
 
     // --- Repositories ---
     val authRepository = AuthRepository(authApi, tokenManager)
     val flashcardRepository = FlashcardRepository(flashcardApi)
     val quizRepository = QuizRepository(quizApi)
+    val profileRepository = ProfileRepository(authApi, profileApi)
 }

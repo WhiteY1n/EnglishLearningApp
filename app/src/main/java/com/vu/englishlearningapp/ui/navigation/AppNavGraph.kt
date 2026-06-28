@@ -1,6 +1,7 @@
 package com.vu.englishlearningapp.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -16,6 +17,10 @@ import com.vu.englishlearningapp.ui.screens.flashcard.FlashcardStudyScreen
 import com.vu.englishlearningapp.ui.screens.flashcard.FlashcardStudyViewModel
 import com.vu.englishlearningapp.ui.screens.home.HomeScreen
 import com.vu.englishlearningapp.ui.screens.home.HomeViewModel
+import com.vu.englishlearningapp.ui.screens.profile.EditProfileScreen
+import com.vu.englishlearningapp.ui.screens.profile.EditProfileViewModel
+import com.vu.englishlearningapp.ui.screens.profile.ProfileScreen
+import com.vu.englishlearningapp.ui.screens.profile.ProfileViewModel
 import com.vu.englishlearningapp.ui.screens.quiz.QuizListScreen
 import com.vu.englishlearningapp.ui.screens.quiz.QuizListViewModel
 import com.vu.englishlearningapp.ui.screens.quiz.QuizTakingScreen
@@ -73,6 +78,9 @@ fun AppNavGraph(
                 },
                 onQuizzesClick = {
                     navController.navigate(Screen.QuizList.route)
+                },
+                onProfileClick = {
+                    navController.navigate(Screen.Profile.route)
                 }
             )
         }
@@ -152,5 +160,82 @@ fun AppNavGraph(
                 }
             )
         }
+
+        // --- Profile Flow ---
+
+        composable(Screen.Profile.route) {
+            val vm: ProfileViewModel = viewModel(
+                factory = ProfileViewModel.Factory(
+                    appContainer.profileRepository,
+                    appContainer.authRepository
+                )
+            )
+            ProfileScreen(
+                viewModel = vm,
+                onEditClick = {
+                    navController.navigate(Screen.EditProfile.route)
+                },
+                onLoggedOut = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.EditProfile.route) {
+            val vm: EditProfileViewModel = viewModel(
+                factory = EditProfileViewModel.Factory(appContainer.profileRepository)
+            )
+
+            // Pre-fill form with data from the previous ProfileScreen's back stack
+            val profileEntry = navController.previousBackStackEntry
+            val profileVm = profileEntry?.let {
+                // Try to get the ProfileViewModel from the previous entry
+                // If unavailable, the form will start empty and user can still type
+                try {
+                    ViewModelProvider(it, ProfileViewModel.Factory(
+                        appContainer.profileRepository,
+                        appContainer.authRepository
+                    ))[ProfileViewModel::class.java]
+                } catch (_: Exception) { null }
+            }
+
+            // Initialize form with existing profile data
+            profileVm?.uiState?.value?.user?.let { user ->
+                vm.initializeForm(
+                    name = user.name,
+                    phone = user.phone ?: "",
+                    birthday = formatBirthdayForEdit(user.birthday),
+                    address = user.address ?: "",
+                    email = user.email
+                )
+            }
+
+            EditProfileScreen(
+                viewModel = vm,
+                onSaveSuccess = {
+                    // Go back to ProfileScreen (it will refresh)
+                    navController.popBackStack()
+                },
+                onCancelClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+    }
+}
+
+/**
+ * Extract date portion from ISO birthday string for the edit form.
+ * e.g., "1989-12-31T17:00:00.000000Z" -> "1989-12-31"
+ */
+private fun formatBirthdayForEdit(birthday: String?): String {
+    if (birthday.isNullOrEmpty()) return ""
+    return if (birthday.contains("T")) {
+        birthday.substringBefore("T")
+    } else {
+        birthday
     }
 }
