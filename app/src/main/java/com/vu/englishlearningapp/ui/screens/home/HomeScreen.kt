@@ -48,7 +48,8 @@ fun HomeScreen(
     onLoggedOut: () -> Unit,
     onFlashcardsClick: () -> Unit = {},
     onQuizzesClick: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    onAdminCollectionClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -182,6 +183,35 @@ fun HomeScreen(
                         onClick = { /* TODO: Navigate to practice screen */ },
                         modifier = Modifier.weight(1f)
                     )
+                }
+
+                // Admin Section (only for super admin)
+                if (uiState.user?.isSuperAdmin == true) {
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text(
+                        text = "Admin Management",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        FeatureCard(
+                            title = "Collections",
+                            description = "Manage flashcards",
+                            icon = Icons.Default.Style,
+                            onClick = onAdminCollectionClick,
+                            modifier = Modifier.weight(1f)
+                        )
+                        // Empty spacer for consistent 2-column layout if only 1 item exists
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
             }
         }

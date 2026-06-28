@@ -11,6 +11,13 @@ import androidx.navigation.navArgument
 import com.vu.englishlearningapp.di.AppContainer
 import com.vu.englishlearningapp.ui.screens.auth.LoginScreen
 import com.vu.englishlearningapp.ui.screens.auth.LoginViewModel
+import com.vu.englishlearningapp.ui.screens.admin.collection.CollectionDetailScreen
+import com.vu.englishlearningapp.ui.screens.admin.collection.CollectionDetailViewModel
+import com.vu.englishlearningapp.ui.screens.admin.collection.CollectionListScreen
+import com.vu.englishlearningapp.ui.screens.admin.collection.CollectionListViewModel
+import com.vu.englishlearningapp.ui.screens.admin.collection.CreateCollectionScreen
+import com.vu.englishlearningapp.ui.screens.admin.collection.CreateEditCollectionViewModel
+import com.vu.englishlearningapp.ui.screens.admin.collection.EditCollectionScreen
 import com.vu.englishlearningapp.ui.screens.flashcard.FlashcardCollectionListScreen
 import com.vu.englishlearningapp.ui.screens.flashcard.FlashcardCollectionListViewModel
 import com.vu.englishlearningapp.ui.screens.flashcard.FlashcardStudyScreen
@@ -81,6 +88,9 @@ fun AppNavGraph(
                 },
                 onProfileClick = {
                     navController.navigate(Screen.Profile.route)
+                },
+                onAdminCollectionClick = {
+                    navController.navigate(Screen.AdminCollectionList.route)
                 }
             )
         }
@@ -217,6 +227,78 @@ fun AppNavGraph(
                 viewModel = vm,
                 onSaveSuccess = {
                     // Go back to ProfileScreen (it will refresh)
+                    navController.popBackStack()
+                },
+                onCancelClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // --- Admin Collection Management Flow ---
+
+        composable(Screen.AdminCollectionList.route) {
+            val vm: CollectionListViewModel = viewModel(
+                factory = CollectionListViewModel.Factory(appContainer.collectionRepository)
+            )
+            CollectionListScreen(
+                viewModel = vm,
+                onCollectionClick = { id ->
+                    navController.navigate(Screen.AdminCollectionDetail.createRoute(id))
+                },
+                onCreateClick = {
+                    navController.navigate(Screen.AdminCreateCollection.route)
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.AdminCollectionDetail.route,
+            arguments = listOf(navArgument("id") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getInt("id") ?: 0
+            val vm: CollectionDetailViewModel = viewModel(
+                factory = CollectionDetailViewModel.Factory(appContainer.collectionRepository, id)
+            )
+            CollectionDetailScreen(
+                viewModel = vm,
+                onEditClick = { collectionId ->
+                    navController.navigate(Screen.AdminEditCollection.createRoute(collectionId))
+                },
+                onDeleteSuccess = {
+                    navController.popBackStack()
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.AdminCreateCollection.route) {
+            val vm: CreateEditCollectionViewModel = viewModel(
+                factory = CreateEditCollectionViewModel.Factory(appContainer.collectionRepository, null)
+            )
+            CreateCollectionScreen(
+                viewModel = vm,
+                onSaveSuccess = {
+                    navController.popBackStack()
+                },
+                onCancelClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = Screen.AdminEditCollection.route,
+            arguments = listOf(navArgument("id") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getInt("id") ?: 0
+            val vm: CreateEditCollectionViewModel = viewModel(
+                factory = CreateEditCollectionViewModel.Factory(appContainer.collectionRepository, id)
+            )
+            EditCollectionScreen(
+                viewModel = vm,
+                onSaveSuccess = {
                     navController.popBackStack()
                 },
                 onCancelClick = {

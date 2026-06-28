@@ -24,4 +24,14 @@ sealed class Screen(val route: String) {
     // Profile flow
     data object Profile : Screen("profile")
     data object EditProfile : Screen("edit_profile")
+
+    // Admin Collection Management flow
+    data object AdminCollectionList : Screen("admin_collection_list")
+    data object AdminCollectionDetail : Screen("admin_collection_detail/{id}") {
+        fun createRoute(id: Int) = "admin_collection_detail/$id"
+    }
+    data object AdminCreateCollection : Screen("admin_create_collection")
+    data object AdminEditCollection : Screen("admin_edit_collection/{id}") {
+        fun createRoute(id: Int) = "admin_edit_collection/$id"
+    }
 }
