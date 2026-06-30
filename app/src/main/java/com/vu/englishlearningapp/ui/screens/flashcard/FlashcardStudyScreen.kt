@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
 
 /**
  * Screen for studying flashcards one at a time.
@@ -56,22 +57,9 @@ fun FlashcardStudyScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = uiState.collectionName.ifEmpty { "Flashcards" },
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to collections")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+            AppTopNavigationBar(
+                title = uiState.collectionName.ifEmpty { "Flashcards" },
+                onBackClick = onBackClick
             )
         }
     ) { innerPadding ->

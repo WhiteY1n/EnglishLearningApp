@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
 
 /**
  * Screen showing quiz results after completion.
@@ -47,12 +48,9 @@ fun ResultScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Quiz Result", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+            AppTopNavigationBar(
+                title = "Quiz Result",
+                onBackClick = onBackToQuizzes
             )
         }
     ) { innerPadding ->

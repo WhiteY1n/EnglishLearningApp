@@ -9,5 +9,6 @@ data class AdminMenuItem(
     val title: String,
     val icon: ImageVector,
     val route: String?,
+    val requiredPermission: String,
     val isComingSoon: Boolean = false
 )

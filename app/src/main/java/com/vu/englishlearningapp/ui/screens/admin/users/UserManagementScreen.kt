@@ -16,6 +16,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,17 +25,9 @@ fun UserManagementScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("User Management") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+            AppTopNavigationBar(
+                title = "User Management",
+                onBackClick = onBackClick
             )
         }
     ) { innerPadding ->

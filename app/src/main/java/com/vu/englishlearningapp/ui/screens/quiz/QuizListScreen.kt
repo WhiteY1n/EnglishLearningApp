@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
 
 /**
  * Screen showing a list of available quizzes/tests.
@@ -54,17 +55,10 @@ fun QuizListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Quizzes", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+            AppTopNavigationBar(
+                title = "Quizzes",
+                onBackClick = onBackClick,
+                onRefreshClick = viewModel::loadTests
             )
         }
     ) { innerPadding ->
@@ -138,7 +132,7 @@ fun QuizListScreen(
 
                                 // Collection name
                                 Text(
-                                    text = test.collection.collectionName,
+                                    text = test.collection?.collectionName ?: "General quiz",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.primary
                                 )

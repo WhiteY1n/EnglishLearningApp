@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
 
 /**
  * Edit Profile screen with editable fields for name, phone, birthday, address.
@@ -70,17 +71,9 @@ fun EditProfileScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Edit Profile", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onCancelClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Cancel")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+            AppTopNavigationBar(
+                title = "Edit Profile",
+                onBackClick = onCancelClick
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }

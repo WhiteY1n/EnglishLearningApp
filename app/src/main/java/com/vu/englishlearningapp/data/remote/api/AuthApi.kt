@@ -3,6 +3,7 @@ package com.vu.englishlearningapp.data.remote.api
 import com.vu.englishlearningapp.data.remote.dto.auth.ApiResponse
 import com.vu.englishlearningapp.data.remote.dto.auth.LoginRequest
 import com.vu.englishlearningapp.data.remote.dto.auth.LoginResponse
+import com.vu.englishlearningapp.data.remote.dto.auth.RefreshTokenRequest
 import com.vu.englishlearningapp.data.remote.dto.auth.UserDto
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -24,5 +25,5 @@ interface AuthApi {
     suspend fun logout(): ApiResponse<Unit>
 
     @POST("api/admin/auth/refresh")
-    suspend fun refreshToken(): ApiResponse<LoginResponse>
+    suspend fun refreshToken(@Body request: RefreshTokenRequest): ApiResponse<LoginResponse>
 }

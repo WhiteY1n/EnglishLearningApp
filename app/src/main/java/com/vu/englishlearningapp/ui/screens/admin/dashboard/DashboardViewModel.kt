@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.vu.englishlearningapp.core.permission.PermissionHelper
 import com.vu.englishlearningapp.data.remote.dto.auth.UserDto
 import com.vu.englishlearningapp.ui.navigation.Screen
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,55 +23,63 @@ data class DashboardUiState(
 
 class DashboardViewModel : ViewModel() {
 
+    private val allMenuItems = listOf(
+        AdminMenuItem(
+            title = "Flashcard Collections",
+            icon = Icons.Default.Style,
+            route = Screen.AdminCollectionList.route,
+            requiredPermission = "flashcard_collection.view"
+        ),
+        AdminMenuItem(
+            title = "Flashcards",
+            icon = Icons.Default.ViewCarousel,
+            route = null,
+            requiredPermission = "flashcard.view",
+            isComingSoon = true
+        ),
+        AdminMenuItem(
+            title = "Questions",
+            icon = Icons.Default.HelpCenter,
+            route = null,
+            requiredPermission = "question.view",
+            isComingSoon = true
+        ),
+        AdminMenuItem(
+            title = "Tests",
+            icon = Icons.Default.Quiz,
+            route = null,
+            requiredPermission = "collection_test.view",
+            isComingSoon = true
+        ),
+        AdminMenuItem(
+            title = "Statistics",
+            icon = Icons.Default.Assessment,
+            route = null,
+            requiredPermission = "user_test_attempt.view",
+            isComingSoon = true
+        ),
+        AdminMenuItem(
+            title = "Users",
+            icon = Icons.Default.People,
+            route = Screen.AdminUserManagement.route,
+            requiredPermission = "user.view"
+        )
+    )
+
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
-
-    init {
-        // Initialize the reusable menu items
-        val items = listOf(
-            AdminMenuItem(
-                title = "Flashcard Collections",
-                icon = Icons.Default.Style,
-                route = Screen.AdminCollectionList.route
-            ),
-            AdminMenuItem(
-                title = "Flashcards",
-                icon = Icons.Default.ViewCarousel,
-                route = null,
-                isComingSoon = true
-            ),
-            AdminMenuItem(
-                title = "Questions",
-                icon = Icons.Default.HelpCenter,
-                route = null,
-                isComingSoon = true
-            ),
-            AdminMenuItem(
-                title = "Tests",
-                icon = Icons.Default.Quiz,
-                route = null,
-                isComingSoon = true
-            ),
-            AdminMenuItem(
-                title = "Statistics",
-                icon = Icons.Default.Assessment,
-                route = null,
-                isComingSoon = true
-            ),
-            AdminMenuItem(
-                title = "Users",
-                icon = Icons.Default.People,
-                route = Screen.AdminUserManagement.route
-            )
-        )
-        _uiState.value = _uiState.value.copy(menuItems = items)
-    }
 
     /**
      * Set the current user to display their name in the welcome text.
      */
     fun setUser(user: UserDto) {
-        _uiState.value = _uiState.value.copy(user = user)
+        val permissionHelper = PermissionHelper(user)
+        _uiState.value = _uiState.value.copy(
+            user = user,
+            menuItems = allMenuItems.filter { menuItem ->
+                permissionHelper.checkPermission(menuItem.requiredPermission)
+            }
+        )
     }
 
     class Factory : ViewModelProvider.Factory {

@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,17 +46,9 @@ fun AdminDashboardScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Admin Dashboard", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+            AppTopNavigationBar(
+                title = "Admin Dashboard",
+                onBackClick = onBackClick
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }

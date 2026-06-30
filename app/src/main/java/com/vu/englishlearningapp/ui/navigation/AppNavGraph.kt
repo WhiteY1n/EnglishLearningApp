@@ -1,6 +1,7 @@
 package com.vu.englishlearningapp.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -50,11 +51,13 @@ import com.vu.englishlearningapp.ui.screens.quiz.ResultScreen
 fun AppNavGraph(
     navController: NavHostController,
     appContainer: AppContainer,
-    startDestination: String
+    startDestination: String,
+    modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = startDestination,
+        modifier = modifier
     ) {
         // --- Auth ---
 
@@ -81,9 +84,7 @@ fun AppNavGraph(
             HomeScreen(
                 viewModel = homeViewModel,
                 onLoggedOut = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
+                    navController.navigateToLogin()
                 },
                 onFlashcardsClick = {
                     navController.navigate(Screen.FlashcardCollections.route)
@@ -191,9 +192,7 @@ fun AppNavGraph(
                     navController.navigate(Screen.EditProfile.route)
                 },
                 onLoggedOut = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
+                    navController.navigateToLogin()
                 },
                 onBackClick = { navController.popBackStack() }
             )

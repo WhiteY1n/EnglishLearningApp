@@ -5,10 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,8 +20,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.vu.englishlearningapp.ui.navigation.AppBottomNavigation
 import com.vu.englishlearningapp.ui.navigation.AppNavGraph
 import com.vu.englishlearningapp.ui.navigation.Screen
+import com.vu.englishlearningapp.ui.navigation.navigateToLogin
 import com.vu.englishlearningapp.ui.theme.EnglishLearningAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -44,11 +51,41 @@ class MainActivity : ComponentActivity() {
 
                 if (startDestination != null) {
                     val navController = rememberNavController()
-                    AppNavGraph(
-                        navController = navController,
-                        appContainer = appContainer,
-                        startDestination = startDestination!!
+                    val backStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = backStackEntry?.destination?.route
+                    val accessToken by appContainer.tokenManager.accessTokenFlow.collectAsState(
+                        initial = if (startDestination == Screen.Home.route) "" else null
                     )
+                    val showBottomNavigation = currentRoute != null &&
+                        currentRoute != Screen.Login.route
+
+                    LaunchedEffect(accessToken, currentRoute) {
+                        if (accessToken == null &&
+                            currentRoute != null &&
+                            currentRoute != Screen.Login.route
+                        ) {
+                            navController.navigateToLogin()
+                        }
+                    }
+
+                    Scaffold(
+                        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                        bottomBar = {
+                            if (showBottomNavigation) {
+                                AppBottomNavigation(
+                                    navController = navController,
+                                    currentRoute = currentRoute
+                                )
+                            }
+                        }
+                    ) { innerPadding ->
+                        AppNavGraph(
+                            navController = navController,
+                            appContainer = appContainer,
+                            startDestination = startDestination!!,
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
                 } else {
                     // Show a loading indicator while checking token
                     LoadingScreen()

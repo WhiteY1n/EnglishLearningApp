@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,13 +119,10 @@ fun CollectionDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Collection Detail", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+            AppTopNavigationBar(
+                title = "Collection Detail",
+                onBackClick = onBackClick,
+                onRefreshClick = viewModel::loadCollectionDetail,
                 actions = {
                     uiState.collection?.let { collection ->
                         IconButton(onClick = { onEditClick(collection.id) }) {
@@ -134,11 +132,7 @@ fun CollectionDetailScreen(
                             Icon(Icons.Default.Delete, contentDescription = "Delete Collection", tint = MaterialTheme.colorScheme.error)
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                }
             )
         },
         floatingActionButton = {
