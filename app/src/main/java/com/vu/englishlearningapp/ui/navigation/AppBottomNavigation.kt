@@ -2,6 +2,7 @@ package com.vu.englishlearningapp.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.Style
@@ -9,7 +10,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -45,8 +45,18 @@ private val bottomNavigationItems = listOf(
         icon = Icons.Default.Quiz,
         relatedRoutes = setOf(
             Screen.QuizList.route,
+            Screen.QuizDetail.route,
             Screen.QuizTaking.route,
             Screen.QuizResult.route
+        )
+    ),
+    BottomNavigationItem(
+        label = "History",
+        route = Screen.AttemptHistory.route,
+        icon = Icons.Default.History,
+        relatedRoutes = setOf(
+            Screen.AttemptHistory.route,
+            Screen.AttemptHistoryDetail.route
         )
     ),
     BottomNavigationItem(
@@ -90,13 +100,10 @@ fun AppBottomNavigation(
                         contentDescription = item.label
                     )
                 },
-                label = { Text(item.label) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Color(0xFF17191C),
-                    selectedTextColor = Color(0xFF17191C),
-                    indicatorColor = Color(0xFF9DB7F4),
-                    unselectedIconColor = Color(0xFF71767F),
-                    unselectedTextColor = Color(0xFF71767F)
+                    indicatorColor = Color(0xFFDDF3FF),
+                    unselectedIconColor = Color(0xFF71767F)
                 )
             )
         }

@@ -18,7 +18,9 @@ data class QuestionDto(
     @SerializedName("question_data") val questionData: JsonObject,
     @SerializedName("flashcard_reference_ids") val flashcardReferenceIds: List<Int>,
     @SerializedName("created_at") val createdAt: String,
-    @SerializedName("updated_at") val updatedAt: String
+    @SerializedName("updated_at") val updatedAt: String,
+    @SerializedName("user_answer") val userAnswer: String? = null,
+    @SerializedName("is_correct") val isCorrect: Boolean? = null
 ) {
     /**
      * Extract the options list from question_data.

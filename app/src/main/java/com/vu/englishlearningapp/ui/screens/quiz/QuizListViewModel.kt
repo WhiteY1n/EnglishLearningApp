@@ -15,9 +15,17 @@ import kotlinx.coroutines.launch
  */
 data class QuizListUiState(
     val tests: List<CollectionTestDto> = emptyList(),
+    val selectedFilter: QuizFilter = QuizFilter.NEWEST,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
+
+enum class QuizFilter {
+    NEWEST,
+    SHORTEST_DURATION,
+    FEWEST_QUESTIONS,
+    NAME_ASCENDING
+}
 
 /**
  * ViewModel for displaying the list of available quizzes/tests.
@@ -25,6 +33,8 @@ data class QuizListUiState(
 class QuizListViewModel(
     private val quizRepository: QuizRepository
 ) : ViewModel() {
+
+    private var allTests: List<CollectionTestDto> = emptyList()
 
     private val _uiState = MutableStateFlow(QuizListUiState())
     val uiState: StateFlow<QuizListUiState> = _uiState.asStateFlow()
@@ -41,8 +51,9 @@ class QuizListViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
                 val tests = quizRepository.getTests()
+                allTests = tests
                 _uiState.value = _uiState.value.copy(
-                    tests = tests,
+                    tests = filterTests(tests, _uiState.value.selectedFilter),
                     isLoading = false
                 )
             } catch (e: Exception) {
@@ -51,6 +62,25 @@ class QuizListViewModel(
                     errorMessage = e.message ?: "Failed to load quizzes"
                 )
             }
+        }
+    }
+
+    fun selectFilter(filter: QuizFilter) {
+        _uiState.value = _uiState.value.copy(
+            tests = filterTests(allTests, filter),
+            selectedFilter = filter
+        )
+    }
+
+    private fun filterTests(
+        tests: List<CollectionTestDto>,
+        filter: QuizFilter
+    ): List<CollectionTestDto> {
+        return when (filter) {
+            QuizFilter.NEWEST -> tests.sortedByDescending { it.updatedAt }
+            QuizFilter.SHORTEST_DURATION -> tests.sortedBy { it.duration }
+            QuizFilter.FEWEST_QUESTIONS -> tests.sortedBy { it.totalQuestions }
+            QuizFilter.NAME_ASCENDING -> tests.sortedBy { it.testName.lowercase() }
         }
     }
 

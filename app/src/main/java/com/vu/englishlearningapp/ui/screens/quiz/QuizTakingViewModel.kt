@@ -3,47 +3,50 @@ package com.vu.englishlearningapp.ui.screens.quiz
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vu.englishlearningapp.data.remote.dto.quiz.AttemptDetailDto
 import com.vu.englishlearningapp.data.remote.dto.quiz.QuestionDto
 import com.vu.englishlearningapp.data.repository.QuizRepository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * UI state for the quiz-taking screen.
- */
 data class QuizTakingUiState(
+    val attemptId: Int? = null,
     val testName: String = "",
     val questions: List<QuestionDto> = emptyList(),
     val currentIndex: Int = 0,
-    val selectedAnswers: Map<Int, String> = emptyMap(), // questionIndex -> selected answer
+    val selectedAnswers: Map<Int, String> = emptyMap(),
+    val remainingSeconds: Int = 0,
     val isLoading: Boolean = false,
+    val isSavingAnswer: Boolean = false,
+    val isSubmitting: Boolean = false,
     val errorMessage: String? = null,
+    val answerErrorMessage: String? = null,
     val isFinished: Boolean = false
 ) {
-    /** The question currently being shown. */
     val currentQuestion: QuestionDto?
         get() = questions.getOrNull(currentIndex)
 
-    /** The answer selected for the current question (if any). */
     val currentSelectedAnswer: String?
-        get() = selectedAnswers[currentIndex]
+        get() = currentQuestion?.let { selectedAnswers[it.id] }
 
-    /** Progress text like "1 / 3". */
     val progress: String
-        get() = if (questions.isEmpty()) "0 / 0"
-        else "${currentIndex + 1} / ${questions.size}"
+        get() = if (questions.isEmpty()) "0 / 0" else "${currentIndex + 1} / ${questions.size}"
 
-    /** Whether this is the last question. */
     val isLastQuestion: Boolean
         get() = currentIndex == questions.size - 1
+
+    val formattedRemainingTime: String
+        get() {
+            val minutes = remainingSeconds / 60
+            val seconds = remainingSeconds % 60
+            return "%02d:%02d".format(minutes, seconds)
+        }
 }
 
-/**
- * ViewModel for taking a quiz.
- * Handles question navigation, answer selection, and result computation.
- */
 class QuizTakingViewModel(
     private val quizRepository: QuizRepository,
     private val testId: Int
@@ -51,87 +54,157 @@ class QuizTakingViewModel(
 
     private val _uiState = MutableStateFlow(QuizTakingUiState())
     val uiState: StateFlow<QuizTakingUiState> = _uiState.asStateFlow()
+    private var timerJob: Job? = null
 
     init {
-        loadTest()
+        startAttempt()
     }
 
-    /**
-     * Load the test detail (with questions) from the API.
-     */
-    private fun loadTest() {
+    private fun startAttempt() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            _uiState.value = QuizTakingUiState(isLoading = true)
             try {
-                val detail = quizRepository.getTestDetail(testId)
-                _uiState.value = _uiState.value.copy(
-                    testName = detail.testName,
-                    questions = detail.questions,
-                    isLoading = false,
-                    currentIndex = 0
+                val startedAttempt = quizRepository.startAttempt(testId)
+                val attemptDetail = quizRepository.getAttempt(startedAttempt.attemptId)
+                val questions = quizRepository.getAttemptQuestions(startedAttempt.attemptId)
+                val savedAnswers = questions.mapNotNull { question ->
+                    question.userAnswer?.let { question.id to it }
+                }.toMap()
+                val firstUnansweredIndex = questions.indexOfFirst { it.userAnswer == null }
+
+                _uiState.value = QuizTakingUiState(
+                    attemptId = startedAttempt.attemptId,
+                    testName = attemptDetail.attempt.collectionTest?.testName.orEmpty(),
+                    questions = questions,
+                    currentIndex = firstUnansweredIndex.takeIf { it >= 0 } ?: 0,
+                    selectedAnswers = savedAnswers,
+                    remainingSeconds = attemptDetail.remainingSeconds
                 )
-            } catch (e: Exception) {
+                startTimer()
+            } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Failed to load quiz"
+                    errorMessage = exception.message ?: "Failed to start quiz"
                 )
             }
         }
     }
 
-    /** Select an answer for the current question. */
     fun selectAnswer(answer: String) {
         val current = _uiState.value
+        val attemptId = current.attemptId ?: return
+        val question = current.currentQuestion ?: return
+        if (current.isSavingAnswer || current.isSubmitting) return
+
+        val previousAnswer = current.selectedAnswers[question.id]
         _uiState.value = current.copy(
-            selectedAnswers = current.selectedAnswers + (current.currentIndex to answer)
+            selectedAnswers = current.selectedAnswers + (question.id to answer),
+            isSavingAnswer = true,
+            answerErrorMessage = null
         )
+
+        viewModelScope.launch {
+            try {
+                quizRepository.saveAnswer(attemptId, question.id, answer)
+                _uiState.value = _uiState.value.copy(isSavingAnswer = false)
+            } catch (exception: Exception) {
+                val restoredAnswers = if (previousAnswer == null) {
+                    _uiState.value.selectedAnswers - question.id
+                } else {
+                    _uiState.value.selectedAnswers + (question.id to previousAnswer)
+                }
+                _uiState.value = _uiState.value.copy(
+                    selectedAnswers = restoredAnswers,
+                    isSavingAnswer = false,
+                    answerErrorMessage = exception.message ?: "Could not save answer"
+                )
+            }
+        }
     }
 
-    /** Move to the next question. */
     fun nextQuestion() {
         val current = _uiState.value
-        if (current.currentIndex < current.questions.size - 1) {
-            _uiState.value = current.copy(currentIndex = current.currentIndex + 1)
-        }
-    }
-
-    /**
-     * Finish the quiz: compare answers, compute score, and store result.
-     */
-    fun finishQuiz() {
-        val current = _uiState.value
-
-        // Build the review list by comparing each answer
-        val reviewItems = current.questions.mapIndexed { index, question ->
-            val userAnswer = current.selectedAnswers[index] ?: "(no answer)"
-            val correctAnswer = question.getCorrectAnswer()
-            ReviewItem(
-                questionText = question.questionText,
-                userAnswer = userAnswer,
-                correctAnswer = correctAnswer,
-                isCorrect = userAnswer == correctAnswer
+        if (!current.isSavingAnswer && current.currentIndex < current.questions.size - 1) {
+            _uiState.value = current.copy(
+                currentIndex = current.currentIndex + 1,
+                answerErrorMessage = null
             )
         }
-
-        val score = reviewItems.count { it.isCorrect }
-
-        // Store result for ResultScreen to read
-        QuizResultHolder.result = QuizResult(
-            testName = current.testName,
-            score = score,
-            total = current.questions.size,
-            reviewItems = reviewItems
-        )
-
-        _uiState.value = current.copy(isFinished = true)
-
-        // TODO: In the future, submit attempt results to backend via POST API
-        // TODO: Example: quizRepository.submitAttempt(testId, selectedAnswers)
     }
 
-    /**
-     * Factory for creating this ViewModel with dependencies.
-     */
+    fun finishQuiz() {
+        submitAttempt()
+    }
+
+    private fun startTimer() {
+        timerJob?.cancel()
+        timerJob = viewModelScope.launch {
+            while (_uiState.value.remainingSeconds > 0 && !_uiState.value.isFinished) {
+                delay(1_000)
+                _uiState.value = _uiState.value.copy(
+                    remainingSeconds = (_uiState.value.remainingSeconds - 1).coerceAtLeast(0)
+                )
+            }
+            if (!_uiState.value.isFinished) {
+                submitAttempt()
+            }
+        }
+    }
+
+    private fun submitAttempt() {
+        val current = _uiState.value
+        val attemptId = current.attemptId ?: return
+        if (current.isSubmitting || current.isFinished) return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSubmitting = true, errorMessage = null)
+            try {
+                var submitError: Exception? = null
+                try {
+                    quizRepository.submitAttempt(attemptId)
+                } catch (exception: Exception) {
+                    submitError = exception
+                }
+
+                val detail = quizRepository.getAttempt(attemptId)
+                if (detail.attempt.status != "submitted") {
+                    throw submitError ?: Exception("Quiz could not be submitted")
+                }
+
+                storeResult(detail)
+                timerJob?.cancel()
+                _uiState.value = _uiState.value.copy(
+                    isSubmitting = false,
+                    remainingSeconds = 0,
+                    isFinished = true
+                )
+            } catch (exception: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isSubmitting = false,
+                    errorMessage = exception.message ?: "Failed to submit quiz"
+                )
+            }
+        }
+    }
+
+    private fun storeResult(detail: AttemptDetailDto) {
+        val attempt = detail.attempt
+        val reviewItems = attempt.questions.map { question ->
+            ReviewItem(
+                questionText = question.questionText,
+                userAnswer = question.answer?.userAnswer ?: "(no answer)",
+                correctAnswer = question.getCorrectAnswer(),
+                isCorrect = question.answer?.isCorrect == true
+            )
+        }
+        QuizResultHolder.result = QuizResult(
+            testName = attempt.collectionTest?.testName ?: _uiState.value.testName,
+            score = attempt.correctCount,
+            total = attempt.collectionTest?.totalQuestions ?: reviewItems.size,
+            reviewItems = reviewItems
+        )
+    }
+
     class Factory(
         private val quizRepository: QuizRepository,
         private val testId: Int

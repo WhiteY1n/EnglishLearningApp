@@ -51,7 +51,8 @@ fun AppTopNavigationBar(
         },
         windowInsets = windowInsets,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color(0xFFE8F0F2),
+            containerColor = Color.Transparent,
+            scrolledContainerColor = Color.Transparent,
             titleContentColor = Color(0xFF17191C),
             navigationIconContentColor = Color(0xFF17191C),
             actionIconContentColor = Color(0xFF17191C)

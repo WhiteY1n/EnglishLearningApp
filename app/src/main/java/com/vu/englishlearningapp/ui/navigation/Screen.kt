@@ -16,10 +16,17 @@ sealed class Screen(val route: String) {
 
     // Quiz flow
     data object QuizList : Screen("quiz_list")
+    data object QuizDetail : Screen("quiz_detail/{testId}") {
+        fun createRoute(testId: Int) = "quiz_detail/$testId"
+    }
     data object QuizTaking : Screen("quiz_taking/{testId}") {
         fun createRoute(testId: Int) = "quiz_taking/$testId"
     }
     data object QuizResult : Screen("quiz_result")
+    data object AttemptHistory : Screen("attempt_history")
+    data object AttemptHistoryDetail : Screen("attempt_history/{attemptId}") {
+        fun createRoute(attemptId: Int) = "attempt_history/$attemptId"
+    }
 
     // Profile flow
     data object Profile : Screen("profile")

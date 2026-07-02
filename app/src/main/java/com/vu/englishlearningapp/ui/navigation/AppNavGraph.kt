@@ -36,9 +36,15 @@ import com.vu.englishlearningapp.ui.screens.profile.ProfileScreen
 import com.vu.englishlearningapp.ui.screens.profile.ProfileViewModel
 import com.vu.englishlearningapp.ui.screens.quiz.QuizListScreen
 import com.vu.englishlearningapp.ui.screens.quiz.QuizListViewModel
+import com.vu.englishlearningapp.ui.screens.quiz.QuizDetailScreen
+import com.vu.englishlearningapp.ui.screens.quiz.QuizDetailViewModel
 import com.vu.englishlearningapp.ui.screens.quiz.QuizTakingScreen
 import com.vu.englishlearningapp.ui.screens.quiz.QuizTakingViewModel
 import com.vu.englishlearningapp.ui.screens.quiz.ResultScreen
+import com.vu.englishlearningapp.ui.screens.quiz.AttemptHistoryScreen
+import com.vu.englishlearningapp.ui.screens.quiz.AttemptHistoryViewModel
+import com.vu.englishlearningapp.ui.screens.quiz.AttemptDetailScreen
+import com.vu.englishlearningapp.ui.screens.quiz.AttemptDetailViewModel
 
 /**
  * Main navigation graph for the app.
@@ -142,7 +148,24 @@ fun AppNavGraph(
             QuizListScreen(
                 viewModel = vm,
                 onTestClick = { testId ->
-                    navController.navigate(Screen.QuizTaking.createRoute(testId))
+                    navController.navigate(Screen.QuizDetail.createRoute(testId))
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.QuizDetail.route,
+            arguments = listOf(navArgument("testId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val testId = backStackEntry.arguments?.getInt("testId") ?: return@composable
+            val vm: QuizDetailViewModel = viewModel(
+                factory = QuizDetailViewModel.Factory(appContainer.quizRepository, testId)
+            )
+            QuizDetailScreen(
+                viewModel = vm,
+                onStartTest = { selectedTestId ->
+                    navController.navigate(Screen.QuizTaking.createRoute(selectedTestId))
                 },
                 onBackClick = { navController.popBackStack() }
             )
@@ -174,6 +197,33 @@ fun AppNavGraph(
                     // Pop back to QuizList (removes ResultScreen from stack)
                     navController.popBackStack(Screen.QuizList.route, inclusive = false)
                 }
+            )
+        }
+
+        composable(Screen.AttemptHistory.route) {
+            val vm: AttemptHistoryViewModel = viewModel(
+                factory = AttemptHistoryViewModel.Factory(appContainer.quizRepository)
+            )
+            AttemptHistoryScreen(
+                viewModel = vm,
+                onAttemptClick = { attemptId ->
+                    navController.navigate(Screen.AttemptHistoryDetail.createRoute(attemptId))
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.AttemptHistoryDetail.route,
+            arguments = listOf(navArgument("attemptId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val attemptId = backStackEntry.arguments?.getInt("attemptId") ?: return@composable
+            val vm: AttemptDetailViewModel = viewModel(
+                factory = AttemptDetailViewModel.Factory(appContainer.quizRepository, attemptId)
+            )
+            AttemptDetailScreen(
+                viewModel = vm,
+                onBackClick = { navController.popBackStack() }
             )
         }
 

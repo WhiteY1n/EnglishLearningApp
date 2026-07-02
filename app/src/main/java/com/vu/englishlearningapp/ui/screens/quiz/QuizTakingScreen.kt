@@ -79,7 +79,7 @@ fun QuizTakingScreen(
                 }
             }
             // Error state
-            uiState.errorMessage != null -> {
+            uiState.errorMessage != null && uiState.questions.isEmpty() -> {
                 Box(
                     modifier = Modifier.fillMaxSize().padding(innerPadding),
                     contentAlignment = Alignment.Center
@@ -135,6 +135,16 @@ fun QuizTakingScreen(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = uiState.formattedRemainingTime,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (uiState.remainingSeconds <= 60) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            }
                         )
                     }
 
@@ -212,6 +222,16 @@ fun QuizTakingScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    val actionError = uiState.answerErrorMessage ?: uiState.errorMessage
+                    if (actionError != null) {
+                        Text(
+                            text = actionError,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
+
                     // Next / Finish button
                     Button(
                         onClick = {
@@ -224,10 +244,18 @@ fun QuizTakingScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
-                        enabled = uiState.currentSelectedAnswer != null
+                        enabled = uiState.currentSelectedAnswer != null &&
+                            !uiState.isSavingAnswer &&
+                            !uiState.isSubmitting &&
+                            uiState.remainingSeconds > 0
                     ) {
                         Text(
-                            text = if (uiState.isLastQuestion) "Finish Quiz" else "Next Question",
+                            text = when {
+                                uiState.isSavingAnswer -> "Saving answer..."
+                                uiState.isSubmitting -> "Submitting..."
+                                uiState.isLastQuestion -> "Finish Quiz"
+                                else -> "Next Question"
+                            },
                             style = MaterialTheme.typography.labelLarge
                         )
                     }

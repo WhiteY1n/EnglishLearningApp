@@ -11,6 +11,7 @@ data class CollectionTestDto(
     @SerializedName("test_type_id") val testTypeId: Int,
     @SerializedName("collection_id") val collectionId: Int?,
     @SerializedName("test_name") val testName: String,
+    @SerializedName("description") val description: String? = null,
     @SerializedName("total_questions") val totalQuestions: Int,
     @SerializedName("duration") val duration: Int,
     @SerializedName("status") val status: Int,

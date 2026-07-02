@@ -15,9 +15,16 @@ import kotlinx.coroutines.launch
  */
 data class CollectionListUiState(
     val collections: List<FlashcardCollectionDto> = emptyList(),
+    val selectedFilter: CollectionFilter = CollectionFilter.NEWEST,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
+
+enum class CollectionFilter {
+    NEWEST,
+    OLDEST,
+    NAME_ASCENDING
+}
 
 /**
  * ViewModel for displaying the list of flashcard collections.
@@ -25,6 +32,8 @@ data class CollectionListUiState(
 class FlashcardCollectionListViewModel(
     private val flashcardRepository: FlashcardRepository
 ) : ViewModel() {
+
+    private var allCollections: List<FlashcardCollectionDto> = emptyList()
 
     private val _uiState = MutableStateFlow(CollectionListUiState())
     val uiState: StateFlow<CollectionListUiState> = _uiState.asStateFlow()
@@ -41,8 +50,9 @@ class FlashcardCollectionListViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
                 val collections = flashcardRepository.getCollections()
+                allCollections = collections
                 _uiState.value = _uiState.value.copy(
-                    collections = collections,
+                    collections = filterCollections(collections, _uiState.value.selectedFilter),
                     isLoading = false
                 )
             } catch (e: Exception) {
@@ -51,6 +61,24 @@ class FlashcardCollectionListViewModel(
                     errorMessage = e.message ?: "Failed to load collections"
                 )
             }
+        }
+    }
+
+    fun selectFilter(filter: CollectionFilter) {
+        _uiState.value = _uiState.value.copy(
+            collections = filterCollections(allCollections, filter),
+            selectedFilter = filter
+        )
+    }
+
+    private fun filterCollections(
+        collections: List<FlashcardCollectionDto>,
+        filter: CollectionFilter
+    ): List<FlashcardCollectionDto> {
+        return when (filter) {
+            CollectionFilter.NEWEST -> collections.sortedByDescending { it.updatedAt }
+            CollectionFilter.OLDEST -> collections.sortedBy { it.updatedAt }
+            CollectionFilter.NAME_ASCENDING -> collections.sortedBy { it.collectionName.lowercase() }
         }
     }
 
