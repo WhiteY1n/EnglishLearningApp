@@ -213,7 +213,7 @@ private fun AttemptDetailContent(
                         Text(question.questionText, style = MaterialTheme.typography.bodyLarge)
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
-                            text = "Your answer: ${answer?.userAnswer ?: "(no answer)"}",
+                            text = "Your answer: ${question.formatUserAnswer(answer?.userAnswer)}",
                             color = AttemptDetailSecondary
                         )
                         if (isSubmitted && !isCorrect) {

@@ -8,11 +8,13 @@ import com.vu.englishlearningapp.data.remote.api.CollectionApi
 import com.vu.englishlearningapp.data.remote.api.FlashcardApi
 import com.vu.englishlearningapp.data.remote.api.ProfileApi
 import com.vu.englishlearningapp.data.remote.api.QuizApi
+import com.vu.englishlearningapp.data.remote.api.QuestionApi
 import com.vu.englishlearningapp.data.repository.AuthRepository
 import com.vu.englishlearningapp.data.repository.CollectionRepository
 import com.vu.englishlearningapp.data.repository.FlashcardRepository
 import com.vu.englishlearningapp.data.repository.ProfileRepository
 import com.vu.englishlearningapp.data.repository.QuizRepository
+import com.vu.englishlearningapp.data.repository.QuestionRepository
 
 /**
  * Manual dependency injection container.
@@ -33,6 +35,7 @@ class AppContainer(context: Context) {
     val authApi: AuthApi = retrofit.create(AuthApi::class.java)
     val flashcardApi: FlashcardApi = retrofit.create(FlashcardApi::class.java)
     val quizApi: QuizApi = retrofit.create(QuizApi::class.java)
+    val questionApi: QuestionApi = retrofit.create(QuestionApi::class.java)
     val profileApi: ProfileApi = retrofit.create(ProfileApi::class.java)
     val collectionApi: CollectionApi = retrofit.create(CollectionApi::class.java)
 
@@ -40,6 +43,7 @@ class AppContainer(context: Context) {
     val authRepository = AuthRepository(authApi, tokenManager)
     val flashcardRepository = FlashcardRepository(flashcardApi)
     val quizRepository = QuizRepository(quizApi)
+    val questionRepository = QuestionRepository(questionApi)
     val profileRepository = ProfileRepository(authApi, profileApi)
     val collectionRepository = CollectionRepository(collectionApi)
 }

@@ -13,6 +13,7 @@ import retrofit2.http.PUT
 import retrofit2.http.DELETE
 import retrofit2.http.Path
 import retrofit2.http.Body
+import retrofit2.http.Query
 
 /**
  * Retrofit API interface for flashcard endpoints.
@@ -20,12 +21,22 @@ import retrofit2.http.Body
 interface FlashcardApi {
 
     @GET("api/admin/flashcard-collections")
-    suspend fun getCollections(): ApiResponse<List<FlashcardCollectionDto>>
+    suspend fun getCollections(
+        @Query("page") page: Int = 1,
+        @Query("per_page") perPage: Int = 15
+    ): ApiResponse<List<FlashcardCollectionDto>>
 
     @GET("api/admin/flashcard-collections/{id}")
     suspend fun getCollectionDetail(@Path("id") id: Int): ApiResponse<FlashcardCollectionDetailDto>
 
     // --- Flashcard Operations ---
+
+    @GET("api/admin/flashcards")
+    suspend fun getFlashcards(
+        @Query("page") page: Int,
+        @Query("per_page") perPage: Int,
+        @Query("search") search: String? = null
+    ): ApiResponse<List<FlashcardDto>>
 
     @GET("api/admin/flashcards/{id}")
     suspend fun getFlashcard(@Path("id") id: Int): ApiResponse<FlashcardDto>
@@ -44,9 +55,8 @@ interface FlashcardApi {
 
     // --- Word Types / Test Types ---
 
-    // Note: The backend uses `test-types` for this endpoint but we map it to WordTypeDto
-    @GET("api/admin/test-types")
-    suspend fun getTestTypes(): ApiResponse<List<WordTypeDto>>
+    @GET("api/admin/word-types")
+    suspend fun getWordTypes(): ApiResponse<List<WordTypeDto>>
 
     // --- Collection Attach Operations ---
 

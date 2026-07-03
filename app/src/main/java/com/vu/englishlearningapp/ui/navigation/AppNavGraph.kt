@@ -1,6 +1,14 @@
 package com.vu.englishlearningapp.ui.navigation
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,6 +32,16 @@ import com.vu.englishlearningapp.ui.screens.admin.collection.CreateEditCollectio
 import com.vu.englishlearningapp.ui.screens.admin.collection.EditCollectionScreen
 import com.vu.englishlearningapp.ui.screens.admin.flashcard.FlashcardFormScreen
 import com.vu.englishlearningapp.ui.screens.admin.flashcard.FlashcardFormViewModel
+import com.vu.englishlearningapp.ui.screens.admin.flashcard.FlashcardManagementScreen
+import com.vu.englishlearningapp.ui.screens.admin.flashcard.FlashcardManagementViewModel
+import com.vu.englishlearningapp.ui.screens.admin.question.QuestionFormScreen
+import com.vu.englishlearningapp.ui.screens.admin.question.QuestionFormViewModel
+import com.vu.englishlearningapp.ui.screens.admin.question.QuestionManagementScreen
+import com.vu.englishlearningapp.ui.screens.admin.question.QuestionManagementViewModel
+import com.vu.englishlearningapp.ui.screens.admin.test.TestFormScreen
+import com.vu.englishlearningapp.ui.screens.admin.test.TestFormViewModel
+import com.vu.englishlearningapp.ui.screens.admin.test.TestManagementScreen
+import com.vu.englishlearningapp.ui.screens.admin.test.TestManagementViewModel
 import com.vu.englishlearningapp.ui.screens.flashcard.FlashcardCollectionListScreen
 import com.vu.englishlearningapp.ui.screens.flashcard.FlashcardCollectionListViewModel
 import com.vu.englishlearningapp.ui.screens.flashcard.FlashcardStudyScreen
@@ -63,7 +81,31 @@ fun AppNavGraph(
     NavHost(
         navController = navController,
         startDestination = startDestination,
-        modifier = modifier
+        modifier = modifier,
+        enterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { fullWidth -> fullWidth },
+                animationSpec = tween(300)
+            ) + fadeIn(animationSpec = tween(220))
+        },
+        exitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { fullWidth -> -fullWidth / 4 },
+                animationSpec = tween(300)
+            ) + fadeOut(animationSpec = tween(220))
+        },
+        popEnterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { fullWidth -> -fullWidth / 4 },
+                animationSpec = tween(300)
+            ) + fadeIn(animationSpec = tween(220))
+        },
+        popExitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { fullWidth -> fullWidth },
+                animationSpec = tween(300)
+            ) + fadeOut(animationSpec = tween(220))
+        }
     ) {
         // --- Auth ---
 
@@ -381,6 +423,185 @@ fun AppNavGraph(
                 onCancelClick = {
                     navController.popBackStack()
                 }
+            )
+        }
+
+        composable(Screen.AdminFlashcardList.route) { backStackEntry ->
+            val vm: FlashcardManagementViewModel = viewModel(
+                factory = FlashcardManagementViewModel.Factory(appContainer.flashcardRepository)
+            )
+            val flashcardChanged by backStackEntry.savedStateHandle
+                .getStateFlow("flashcard_changed", false)
+                .collectAsState()
+            LaunchedEffect(flashcardChanged) {
+                if (flashcardChanged) {
+                    vm.refresh()
+                    backStackEntry.savedStateHandle["flashcard_changed"] = false
+                }
+            }
+            FlashcardManagementScreen(
+                viewModel = vm,
+                onCreateClick = {
+                    navController.navigate(Screen.AdminStandaloneFlashcardCreate.route)
+                },
+                onEditClick = { flashcardId ->
+                    navController.navigate(Screen.AdminStandaloneFlashcardEdit.createRoute(flashcardId))
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.AdminStandaloneFlashcardCreate.route) {
+            val vm: FlashcardFormViewModel = viewModel(
+                factory = FlashcardFormViewModel.Factory(appContainer.flashcardRepository, null, null)
+            )
+            FlashcardFormScreen(
+                viewModel = vm,
+                isEditMode = false,
+                onSaveSuccess = {
+                    navController.previousBackStackEntry?.savedStateHandle?.set("flashcard_changed", true)
+                    navController.popBackStack()
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.AdminQuestionList.route) { backStackEntry ->
+            val vm: QuestionManagementViewModel = viewModel(
+                factory = QuestionManagementViewModel.Factory(appContainer.questionRepository)
+            )
+            val questionChanged by backStackEntry.savedStateHandle
+                .getStateFlow("question_changed", false)
+                .collectAsState()
+            LaunchedEffect(questionChanged) {
+                if (questionChanged) {
+                    vm.refresh()
+                    backStackEntry.savedStateHandle["question_changed"] = false
+                }
+            }
+            QuestionManagementScreen(
+                viewModel = vm,
+                onCreateClick = { navController.navigate(Screen.AdminQuestionCreate.route) },
+                onEditClick = { id -> navController.navigate(Screen.AdminQuestionEdit.createRoute(id)) },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.AdminQuestionCreate.route) {
+            val vm: QuestionFormViewModel = viewModel(
+                factory = QuestionFormViewModel.Factory(appContainer.questionRepository, null)
+            )
+            QuestionFormScreen(
+                viewModel = vm,
+                isEditMode = false,
+                onSaveSuccess = {
+                    navController.previousBackStackEntry?.savedStateHandle?.set("question_changed", true)
+                    navController.popBackStack()
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.AdminTestList.route) { backStackEntry ->
+            val vm: TestManagementViewModel = viewModel(
+                factory = TestManagementViewModel.Factory(appContainer.quizRepository)
+            )
+            val testChanged by backStackEntry.savedStateHandle
+                .getStateFlow("test_changed", false)
+                .collectAsState()
+            LaunchedEffect(testChanged) {
+                if (testChanged) {
+                    vm.refresh()
+                    backStackEntry.savedStateHandle["test_changed"] = false
+                }
+            }
+            TestManagementScreen(
+                viewModel = vm,
+                onCreateClick = { navController.navigate(Screen.AdminTestCreate.route) },
+                onEditClick = { id -> navController.navigate(Screen.AdminTestEdit.createRoute(id)) },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.AdminTestCreate.route) {
+            val vm: TestFormViewModel = viewModel(
+                factory = TestFormViewModel.Factory(
+                    appContainer.quizRepository,
+                    appContainer.flashcardRepository,
+                    appContainer.questionRepository,
+                    null
+                )
+            )
+            TestFormScreen(
+                viewModel = vm,
+                isEditMode = false,
+                onSaveSuccess = {
+                    navController.previousBackStackEntry?.savedStateHandle?.set("test_changed", true)
+                    navController.popBackStack()
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.AdminTestEdit.route,
+            arguments = listOf(navArgument("testId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val testId = backStackEntry.arguments?.getInt("testId") ?: return@composable
+            val vm: TestFormViewModel = viewModel(
+                factory = TestFormViewModel.Factory(
+                    appContainer.quizRepository,
+                    appContainer.flashcardRepository,
+                    appContainer.questionRepository,
+                    testId
+                )
+            )
+            TestFormScreen(
+                viewModel = vm,
+                isEditMode = true,
+                onSaveSuccess = {
+                    navController.previousBackStackEntry?.savedStateHandle?.set("test_changed", true)
+                    navController.popBackStack()
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.AdminQuestionEdit.route,
+            arguments = listOf(navArgument("questionId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val questionId = backStackEntry.arguments?.getInt("questionId") ?: return@composable
+            val vm: QuestionFormViewModel = viewModel(
+                factory = QuestionFormViewModel.Factory(appContainer.questionRepository, questionId)
+            )
+            QuestionFormScreen(
+                viewModel = vm,
+                isEditMode = true,
+                onSaveSuccess = {
+                    navController.previousBackStackEntry?.savedStateHandle?.set("question_changed", true)
+                    navController.popBackStack()
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.AdminStandaloneFlashcardEdit.route,
+            arguments = listOf(navArgument("flashcardId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val flashcardId = backStackEntry.arguments?.getInt("flashcardId") ?: return@composable
+            val vm: FlashcardFormViewModel = viewModel(
+                factory = FlashcardFormViewModel.Factory(appContainer.flashcardRepository, null, flashcardId)
+            )
+            FlashcardFormScreen(
+                viewModel = vm,
+                isEditMode = true,
+                onSaveSuccess = {
+                    navController.previousBackStackEntry?.savedStateHandle?.set("flashcard_changed", true)
+                    navController.popBackStack()
+                },
+                onBackClick = { navController.popBackStack() }
             )
         }
 

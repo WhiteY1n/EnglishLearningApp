@@ -9,6 +9,8 @@ import com.vu.englishlearningapp.data.remote.dto.quiz.SaveAnswerRequestDto
 import com.vu.englishlearningapp.data.remote.dto.quiz.StartAttemptDto
 import com.vu.englishlearningapp.data.remote.dto.quiz.AttemptHistoryDto
 import com.vu.englishlearningapp.data.remote.dto.common.MetaDto
+import com.vu.englishlearningapp.data.remote.dto.quiz.CollectionTestRequestDto
+import com.vu.englishlearningapp.data.remote.dto.quiz.TestTypeDto
 
 /**
  * Repository for quiz/test operations.
@@ -27,6 +29,15 @@ class QuizRepository(private val quizApi: QuizApi) {
         return response.data
     }
 
+    suspend fun getTests(
+        page: Int,
+        perPage: Int = 10,
+        search: String? = null
+    ): Pair<List<CollectionTestDto>, MetaDto?> {
+        val response = quizApi.getTests(page, perPage, search?.takeIf { it.isNotBlank() })
+        return response.requireData() to response.meta
+    }
+
     /**
      * Get a single test with all its questions.
      */
@@ -36,6 +47,19 @@ class QuizRepository(private val quizApi: QuizApi) {
             throw Exception(response.message)
         }
         return response.data
+    }
+
+    suspend fun getTestTypes(): List<TestTypeDto> = quizApi.getTestTypes().requireData()
+
+    suspend fun createTest(request: CollectionTestRequestDto): CollectionTestDetailDto =
+        quizApi.createTest(request).requireData()
+
+    suspend fun updateTest(id: Int, request: CollectionTestRequestDto): CollectionTestDetailDto =
+        quizApi.updateTest(id, request).requireData()
+
+    suspend fun deleteTest(id: Int) {
+        val response = quizApi.deleteTest(id)
+        if (response.statusCode !in 200..204) throw Exception(response.message)
     }
 
     suspend fun startAttempt(testId: Int): StartAttemptDto {

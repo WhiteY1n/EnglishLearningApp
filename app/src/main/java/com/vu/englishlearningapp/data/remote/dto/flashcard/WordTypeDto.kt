@@ -7,9 +7,9 @@ import com.google.gson.annotations.SerializedName
  */
 data class WordTypeDto(
     @SerializedName("id") val id: Int,
-    @SerializedName("test_type") val testType: String, // from test-types endpoint
-    @SerializedName("type_name") val typeName: String? = null // from flashcard resource nested word_type
+    @SerializedName("test_type") val testType: String? = null,
+    @SerializedName("type_name") val typeName: String? = null
 ) {
     val displayValue: String
-        get() = typeName ?: testType
+        get() = typeName ?: testType ?: "Unknown"
 }

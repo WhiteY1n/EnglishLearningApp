@@ -7,6 +7,7 @@ import com.vu.englishlearningapp.data.remote.dto.flashcard.FlashcardDto
 import com.vu.englishlearningapp.data.remote.dto.flashcard.FlashcardRequestDto
 import com.vu.englishlearningapp.data.remote.dto.flashcard.WordTypeDto
 import com.vu.englishlearningapp.data.remote.dto.flashcard.AttachFlashcardsRequestDto
+import com.vu.englishlearningapp.data.remote.dto.common.MetaDto
 
 /**
  * Repository for flashcard operations.
@@ -25,6 +26,19 @@ class FlashcardRepository(private val flashcardApi: FlashcardApi) {
         return response.data
     }
 
+    suspend fun getAllCollections(): List<FlashcardCollectionDto> {
+        val collections = mutableListOf<FlashcardCollectionDto>()
+        var page = 1
+        do {
+            val response = flashcardApi.getCollections(page = page, perPage = 100)
+            if (response.statusCode != 200 || response.data == null) throw Exception(response.message)
+            collections += response.data
+            val lastPage = response.meta?.lastPage ?: page
+            page++
+        } while (page <= lastPage)
+        return collections.distinctBy { it.id }
+    }
+
     /**
      * Get a single collection with all its flashcards.
      */
@@ -37,6 +51,18 @@ class FlashcardRepository(private val flashcardApi: FlashcardApi) {
     }
 
     // --- Flashcard Operations ---
+
+    suspend fun getFlashcards(
+        page: Int,
+        perPage: Int = 10,
+        search: String? = null
+    ): Pair<List<FlashcardDto>, MetaDto?> {
+        val response = flashcardApi.getFlashcards(page, perPage, search?.takeIf { it.isNotBlank() })
+        if (response.statusCode != 200 || response.data == null) {
+            throw Exception(response.message)
+        }
+        return response.data to response.meta
+    }
 
     suspend fun getFlashcard(id: Int): FlashcardDto {
         val response = flashcardApi.getFlashcard(id)
@@ -72,9 +98,7 @@ class FlashcardRepository(private val flashcardApi: FlashcardApi) {
     // --- Word Types ---
 
     suspend fun getWordTypes(): List<WordTypeDto> {
-        // TODO: Update endpoint to /api/admin/word-types when backend is fixed.
-        // Currently falling back to test-types due to backend dependency.
-        val response = flashcardApi.getTestTypes()
+        val response = flashcardApi.getWordTypes()
         if (response.statusCode != 200 || response.data == null) {
             throw Exception(response.message)
         }

@@ -1,6 +1,7 @@
 package com.vu.englishlearningapp.data.remote.dto.quiz
 
-import com.google.gson.JsonObject
+import com.google.gson.JsonElement
+import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 
 data class StartAttemptDto(
@@ -37,12 +38,45 @@ data class AttemptTestDto(
 data class AttemptQuestionDto(
     @SerializedName("id") val id: Int,
     @SerializedName("question_text") val questionText: String,
-    @SerializedName("question_data") val questionData: JsonObject,
+    @SerializedName("question_data") val questionData: JsonElement,
     @SerializedName("answer") val answer: AttemptAnswerDto?
 ) {
     fun getCorrectAnswer(): String {
-        val correct = questionData.get("correct") ?: return ""
-        return if (correct.isJsonPrimitive) correct.asJsonPrimitive.asString else correct.toString()
+        val data = questionData.toQuestionDataObject()
+        data.get("answer")?.let { return it.asString }
+        data.getAsJsonArray("pairs")?.let { pairs ->
+            return pairs.joinToString(", ") { element ->
+                val pair = element.asJsonObject
+                "${pair.get("left").asString} → ${pair.get("right").asString}"
+            }
+        }
+        val correct = data.get("correct") ?: return ""
+        if (data.has("options") && correct.isJsonPrimitive && correct.asJsonPrimitive.isNumber) {
+            return data.getAsJsonArray("options")?.get(correct.asInt)?.asString ?: correct.asString
+        }
+        return if (correct.isJsonPrimitive) correct.asString else correct.toString()
+    }
+
+    fun formatUserAnswer(userAnswer: String?): String {
+        if (userAnswer.isNullOrBlank()) return "(no answer)"
+        val data = questionData.toQuestionDataObject()
+        if (data.has("options")) {
+            return userAnswer.toIntOrNull()?.let { index ->
+                data.getAsJsonArray("options")?.get(index)?.asString
+            } ?: userAnswer
+        }
+        if (data.has("pairs")) {
+            return runCatching {
+                JsonParser.parseString(userAnswer).asJsonArray.joinToString(", ") { element ->
+                    val pair = element.asJsonObject
+                    "${pair.get("left").asString} → ${pair.get("right").asString}"
+                }
+            }.getOrDefault(userAnswer)
+        }
+        if (data.get("correct")?.asJsonPrimitive?.isBoolean == true) {
+            return userAnswer.replaceFirstChar { it.uppercase() }
+        }
+        return userAnswer
     }
 }
 

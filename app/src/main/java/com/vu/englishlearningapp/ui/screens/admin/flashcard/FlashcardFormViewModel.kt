@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 class FlashcardFormViewModel(
     private val flashcardRepository: FlashcardRepository,
-    private val collectionId: Int,
+    private val collectionId: Int?,
     private val flashcardId: Int? // null means Create mode
 ) : ViewModel() {
 
@@ -100,8 +100,9 @@ class FlashcardFormViewModel(
                 if (flashcardId == null) {
                     // Create mode
                     val newFlashcard = flashcardRepository.createFlashcard(original, translated, wordTypeId!!)
-                    // Automatically attach to collection
-                    flashcardRepository.attachToCollection(collectionId, listOf(newFlashcard.id))
+                    collectionId?.let { id ->
+                        flashcardRepository.attachToCollection(id, listOf(newFlashcard.id))
+                    }
                 } else {
                     // Edit mode
                     flashcardRepository.updateFlashcard(flashcardId, original, translated, wordTypeId!!)
@@ -123,7 +124,7 @@ class FlashcardFormViewModel(
 
     class Factory(
         private val flashcardRepository: FlashcardRepository,
-        private val collectionId: Int,
+        private val collectionId: Int?,
         private val flashcardId: Int?
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")

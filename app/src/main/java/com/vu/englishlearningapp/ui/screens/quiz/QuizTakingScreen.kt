@@ -1,6 +1,7 @@
 package com.vu.englishlearningapp.ui.screens.quiz
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -24,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,6 +40,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
@@ -166,56 +172,27 @@ fun QuizTakingScreen(
                             .verticalScroll(rememberScrollState())
                     ) {
                         uiState.currentQuestion?.let { question ->
-                            // Question text
-                            Text(
-                                text = question.questionText,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-
-                            Spacer(modifier = Modifier.height(24.dp))
-
-                            // Answer options
-                            val options = question.getOptions()
-                            options.forEach { option ->
-                                val isSelected = uiState.currentSelectedAnswer == option
-
-                                OutlinedCard(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    onClick = { viewModel.selectAnswer(option) },
-                                    border = BorderStroke(
-                                        width = if (isSelected) 2.dp else 1.dp,
-                                        color = if (isSelected)
-                                            MaterialTheme.colorScheme.primary
-                                        else
-                                            MaterialTheme.colorScheme.outline
-                                    ),
-                                    colors = CardDefaults.outlinedCardColors(
-                                        containerColor = if (isSelected)
-                                            MaterialTheme.colorScheme.primaryContainer
-                                        else
-                                            MaterialTheme.colorScheme.surface
-                                    )
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        RadioButton(
-                                            selected = isSelected,
-                                            onClick = { viewModel.selectAnswer(option) }
-                                        )
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Text(
-                                            text = option,
-                                            style = MaterialTheme.typography.bodyLarge
-                                        )
-                                    }
-                                }
+                            if (question.typeKeyword == "multiple_choice") {
+                                MultipleChoiceQuestionCard(
+                                    question = question,
+                                    questionNumber = uiState.currentIndex + 1,
+                                    answer = uiState.currentSelectedAnswer,
+                                    enabled = !uiState.isSavingAnswer && !uiState.isSubmitting,
+                                    onAnswerChanged = viewModel::updateAnswer
+                                )
+                            } else {
+                                Text(
+                                    text = question.questionText,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                QuizAnswerInput(
+                                    question = question,
+                                    answer = uiState.currentSelectedAnswer,
+                                    enabled = !uiState.isSavingAnswer && !uiState.isSubmitting,
+                                    onAnswerChanged = viewModel::updateAnswer
+                                )
                             }
                         }
                     }
@@ -232,32 +209,55 @@ fun QuizTakingScreen(
                         )
                     }
 
-                    // Next / Finish button
-                    Button(
-                        onClick = {
-                            if (uiState.isLastQuestion) {
-                                viewModel.finishQuiz()
-                            } else {
-                                viewModel.nextQuestion()
-                            }
-                        },
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = viewModel::previousQuestion,
+                            enabled = !uiState.isFirstQuestion && !uiState.isSavingAnswer && !uiState.isSubmitting,
+                            modifier = Modifier.weight(1f).height(52.dp)
+                        ) {
+                            Text("‹  Previous")
+                        }
+                        Button(
+                            onClick = viewModel::saveAnswerAndContinue,
+                            modifier = Modifier.weight(1f).height(52.dp),
+                            enabled = uiState.hasCurrentAnswer &&
+                                !uiState.isSavingAnswer &&
+                                !uiState.isSubmitting &&
+                                uiState.remainingSeconds > 0
+                        ) {
+                            Text(
+                                text = when {
+                                    uiState.isSavingAnswer -> "Saving..."
+                                    uiState.isSubmitting -> "Submitting..."
+                                    uiState.isLastQuestion -> "Finish"
+                                    else -> "Next  ›"
+                                },
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
+
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp),
-                        enabled = uiState.currentSelectedAnswer != null &&
-                            !uiState.isSavingAnswer &&
-                            !uiState.isSubmitting &&
-                            uiState.remainingSeconds > 0
+                            .horizontalScroll(rememberScrollState())
+                            .padding(top = 14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(7.dp, Alignment.CenterHorizontally)
                     ) {
-                        Text(
-                            text = when {
-                                uiState.isSavingAnswer -> "Saving answer..."
-                                uiState.isSubmitting -> "Submitting..."
-                                uiState.isLastQuestion -> "Finish Quiz"
-                                else -> "Next Question"
-                            },
-                            style = MaterialTheme.typography.labelLarge
-                        )
+                        uiState.questions.forEachIndexed { index, _ ->
+                            Box(
+                                modifier = Modifier
+                                    .size(if (index == uiState.currentIndex) 10.dp else 7.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (index == uiState.currentIndex) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.outlineVariant
+                                    )
+                            )
+                        }
                     }
                 }
             }

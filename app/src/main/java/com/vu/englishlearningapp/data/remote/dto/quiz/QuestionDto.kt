@@ -1,53 +1,67 @@
 package com.vu.englishlearningapp.data.remote.dto.quiz
 
+import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 
-/**
- * A single quiz question.
- *
- * The question_data field is stored as a raw JsonObject because:
- * - "correct" can be a String (for multiple choice) or Boolean (for true/false).
- * - Using JsonObject lets us safely handle both types without crashing.
- *
- * Use getOptions() and getCorrectAnswer() to safely extract values.
- */
+data class MatchingPairDto(val left: String, val right: String)
+
 data class QuestionDto(
     @SerializedName("id") val id: Int,
+    @SerializedName("question_type_id") val questionTypeId: Int? = null,
     @SerializedName("question_text") val questionText: String,
-    @SerializedName("question_data") val questionData: JsonObject,
-    @SerializedName("flashcard_reference_ids") val flashcardReferenceIds: List<Int>,
-    @SerializedName("created_at") val createdAt: String,
-    @SerializedName("updated_at") val updatedAt: String,
+    @SerializedName("question_data") val questionData: JsonElement,
+    @SerializedName("flashcard_reference_ids") val flashcardReferenceIds: List<Int> = emptyList(),
+    @SerializedName("created_at") val createdAt: String? = null,
+    @SerializedName("updated_at") val updatedAt: String? = null,
     @SerializedName("user_answer") val userAnswer: String? = null,
     @SerializedName("is_correct") val isCorrect: Boolean? = null
 ) {
-    /**
-     * Extract the options list from question_data.
-     * Returns empty list if "options" key is not present.
-     */
-    fun getOptions(): List<String> {
-        val optionsArray = questionData.getAsJsonArray("options") ?: return emptyList()
-        return optionsArray.map { it.asString }
-    }
-
-    /**
-     * Extract the correct answer from question_data.
-     * Handles both String and Boolean values safely.
-     */
-    fun getCorrectAnswer(): String {
-        val correct = questionData.get("correct") ?: return ""
-        return when {
-            correct.isJsonPrimitive -> {
-                val primitive = correct.asJsonPrimitive
-                when {
-                    primitive.isString -> primitive.asString
-                    primitive.isBoolean -> primitive.asBoolean.toString()
-                    primitive.isNumber -> primitive.asNumber.toString()
-                    else -> correct.toString()
-                }
+    val typeKeyword: String
+        get() {
+            val data = getQuestionDataObject()
+            return when {
+                data.has("options") -> "multiple_choice"
+                data.has("pairs") -> "matching"
+                data.has("answer") -> "fill_in_blank"
+                data.get("correct")?.isJsonPrimitive == true &&
+                    data.getAsJsonPrimitive("correct").isBoolean -> "true_false"
+                else -> "unknown"
             }
-            else -> correct.toString()
         }
+
+    fun getQuestionDataObject(): JsonObject = questionData.toQuestionDataObject()
+
+    fun getOptions(): List<String> =
+        getQuestionDataObject().getAsJsonArray("options")?.map { it.asString }.orEmpty()
+
+    fun getMatchingPairs(): List<MatchingPairDto> =
+        getQuestionDataObject().getAsJsonArray("pairs")?.mapNotNull { element ->
+            val pair = element.takeIf { it.isJsonObject }?.asJsonObject ?: return@mapNotNull null
+            val left = pair.get("left")?.asString ?: return@mapNotNull null
+            val right = pair.get("right")?.asString ?: return@mapNotNull null
+            MatchingPairDto(left, right)
+        }.orEmpty()
+
+    fun getCorrectAnswer(): String {
+        val data = getQuestionDataObject()
+        data.get("answer")?.let { return it.asString }
+        data.getAsJsonArray("pairs")?.let { return it.toString() }
+        val correct = data.get("correct") ?: return ""
+        if (typeKeyword == "multiple_choice" && correct.isJsonPrimitive && correct.asJsonPrimitive.isNumber) {
+            return getOptions().getOrNull(correct.asInt) ?: correct.asString
+        }
+        return if (correct.isJsonPrimitive) correct.asString else correct.toString()
+    }
+}
+
+internal fun JsonElement.toQuestionDataObject(): JsonObject {
+    return when {
+        isJsonObject -> asJsonObject
+        isJsonPrimitive && asJsonPrimitive.isString -> runCatching {
+            JsonParser.parseString(asString).asJsonObject
+        }.getOrDefault(JsonObject())
+        else -> JsonObject()
     }
 }

@@ -33,23 +33,20 @@ class DashboardViewModel : ViewModel() {
         AdminMenuItem(
             title = "Flashcards",
             icon = Icons.Default.ViewCarousel,
-            route = null,
-            requiredPermission = "flashcard.view",
-            isComingSoon = true
+            route = Screen.AdminFlashcardList.route,
+            requiredPermission = "flashcard.view"
         ),
         AdminMenuItem(
             title = "Questions",
             icon = Icons.Default.HelpCenter,
-            route = null,
-            requiredPermission = "question.view",
-            isComingSoon = true
+            route = Screen.AdminQuestionList.route,
+            requiredPermission = "question.view"
         ),
         AdminMenuItem(
             title = "Tests",
             icon = Icons.Default.Quiz,
-            route = null,
-            requiredPermission = "collection_test.view",
-            isComingSoon = true
+            route = Screen.AdminTestList.route,
+            requiredPermission = "collection_test.view"
         ),
         AdminMenuItem(
             title = "Statistics",

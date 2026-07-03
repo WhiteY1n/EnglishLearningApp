@@ -33,11 +33,17 @@ data class QuizTakingUiState(
     val currentSelectedAnswer: String?
         get() = currentQuestion?.let { selectedAnswers[it.id] }
 
+    val hasCurrentAnswer: Boolean
+        get() = !currentSelectedAnswer.isNullOrBlank()
+
     val progress: String
         get() = if (questions.isEmpty()) "0 / 0" else "${currentIndex + 1} / ${questions.size}"
 
     val isLastQuestion: Boolean
         get() = currentIndex == questions.size - 1
+
+    val isFirstQuestion: Boolean
+        get() = currentIndex == 0
 
     val formattedRemainingTime: String
         get() {
@@ -90,31 +96,36 @@ class QuizTakingViewModel(
         }
     }
 
-    fun selectAnswer(answer: String) {
+    fun updateAnswer(answer: String) {
+        val current = _uiState.value
+        val question = current.currentQuestion ?: return
+        _uiState.value = current.copy(
+            selectedAnswers = current.selectedAnswers + (question.id to answer),
+            answerErrorMessage = null
+        )
+    }
+
+    fun saveAnswerAndContinue() {
         val current = _uiState.value
         val attemptId = current.attemptId ?: return
         val question = current.currentQuestion ?: return
+        val answer = current.currentSelectedAnswer ?: return
         if (current.isSavingAnswer || current.isSubmitting) return
 
-        val previousAnswer = current.selectedAnswers[question.id]
-        _uiState.value = current.copy(
-            selectedAnswers = current.selectedAnswers + (question.id to answer),
-            isSavingAnswer = true,
-            answerErrorMessage = null
-        )
+        _uiState.value = current.copy(isSavingAnswer = true, answerErrorMessage = null)
 
         viewModelScope.launch {
             try {
                 quizRepository.saveAnswer(attemptId, question.id, answer)
-                _uiState.value = _uiState.value.copy(isSavingAnswer = false)
-            } catch (exception: Exception) {
-                val restoredAnswers = if (previousAnswer == null) {
-                    _uiState.value.selectedAnswers - question.id
+                val latest = _uiState.value
+                _uiState.value = latest.copy(isSavingAnswer = false)
+                if (latest.isLastQuestion) {
+                    submitAttempt()
                 } else {
-                    _uiState.value.selectedAnswers + (question.id to previousAnswer)
+                    nextQuestion()
                 }
+            } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    selectedAnswers = restoredAnswers,
                     isSavingAnswer = false,
                     answerErrorMessage = exception.message ?: "Could not save answer"
                 )
@@ -132,8 +143,14 @@ class QuizTakingViewModel(
         }
     }
 
-    fun finishQuiz() {
-        submitAttempt()
+    fun previousQuestion() {
+        val current = _uiState.value
+        if (!current.isSavingAnswer && current.currentIndex > 0) {
+            _uiState.value = current.copy(
+                currentIndex = current.currentIndex - 1,
+                answerErrorMessage = null
+            )
+        }
     }
 
     private fun startTimer() {
@@ -192,7 +209,7 @@ class QuizTakingViewModel(
         val reviewItems = attempt.questions.map { question ->
             ReviewItem(
                 questionText = question.questionText,
-                userAnswer = question.answer?.userAnswer ?: "(no answer)",
+                userAnswer = question.formatUserAnswer(question.answer?.userAnswer),
                 correctAnswer = question.getCorrectAnswer(),
                 isCorrect = question.answer?.isCorrect == true
             )
