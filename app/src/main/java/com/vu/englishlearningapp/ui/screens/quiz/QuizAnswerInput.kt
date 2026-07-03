@@ -223,10 +223,16 @@ private fun MatchingAnswer(
     var selectedRight by remember(question.id) { mutableStateOf<String?>(null) }
     val rightOptions = pairs.map { it.right }.distinct()
     val pairColors = listOf(
-        Color(0xFFE8F5EF) to Color(0xFF2E8B67),
-        Color(0xFFF1EAFB) to Color(0xFF7654A8),
-        Color(0xFFFFF1E5) to Color(0xFFB56B2A),
-        Color(0xFFE8F0FA) to Color(0xFF4968A8)
+        Color(0xFFE8F5EF) to Color(0xFF2E8B67), // Green
+        Color(0xFFF1EAFB) to Color(0xFF7654A8), // Purple
+        Color(0xFFFFF1E5) to Color(0xFFB56B2A), // Orange
+        Color(0xFFE8F0FA) to Color(0xFF4968A8), // Blue
+        Color(0xFFFFF0F3) to Color(0xFFC24075), // Pink
+        Color(0xFFE0F7FA) to Color(0xFF007A87), // Teal
+        Color(0xFFFFF8E1) to Color(0xFFA07800), // Amber/Gold
+        Color(0xFFECEFF1) to Color(0xFF455A64), // Slate/Gray
+        Color(0xFFEEF0FC) to Color(0xFF4358CD), // Indigo/Lavender
+        Color(0xFFF1F8E9) to Color(0xFF558B2F)  // Lime/Olive
     )
     val publishAnswer = {
         onAnswerChanged(

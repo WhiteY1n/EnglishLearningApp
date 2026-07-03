@@ -47,8 +47,16 @@ fun QuizTakingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    LaunchedEffect(Unit) {
+        viewModel.checkAttemptStatus()
+    }
+
     LaunchedEffect(uiState.isFinished) {
         if (uiState.isFinished) onQuizFinished()
+    }
+
+    LaunchedEffect(uiState.isAlreadySubmitted) {
+        if (uiState.isAlreadySubmitted) onBackClick()
     }
 
     Scaffold(

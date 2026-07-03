@@ -23,7 +23,8 @@ data class QuizDetailUiState(
     val test: CollectionTestDetailDto? = null,
     val availability: TestAvailability = TestAvailability.AVAILABLE,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val activeAttemptId: Int? = null
 )
 
 class QuizDetailViewModel(
@@ -43,9 +44,17 @@ class QuizDetailViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
                 val test = quizRepository.getTestDetail(testId)
+                
+                // Fetch attempts to check for any unfinished attempt
+                val attemptsResult = quizRepository.getMyAttempts(1)
+                val activeAttempt = attemptsResult.first.find {
+                    it.collectionTest?.id == testId && it.status != "submitted"
+                }
+
                 _uiState.value = QuizDetailUiState(
                     test = test,
-                    availability = resolveAvailability(test.startedAt, test.finishedAt)
+                    availability = resolveAvailability(test.startedAt, test.finishedAt),
+                    activeAttemptId = activeAttempt?.id
                 )
             } catch (exception: Exception) {
                 _uiState.value = QuizDetailUiState(

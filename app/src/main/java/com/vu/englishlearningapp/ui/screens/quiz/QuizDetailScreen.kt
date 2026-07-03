@@ -179,12 +179,22 @@ fun QuizDetailScreen(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)
                         )
                     } else {
-                        Text(
-                            text = "The countdown starts immediately after you press Start Test.",
-                            color = DetailSecondaryText,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
-                        )
+                        if (uiState.activeAttemptId != null) {
+                            Text(
+                                text = "Bạn đang làm dở bài test này.",
+                                color = MaterialTheme.colorScheme.error,
+                                fontWeight = FontWeight.SemiBold,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
+                            )
+                        } else {
+                            Text(
+                                text = "The countdown starts immediately after you press Start Test.",
+                                color = DetailSecondaryText,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
+                            )
+                        }
                         Button(
                             onClick = { onStartTest(test.id) },
                             modifier = Modifier
@@ -193,7 +203,10 @@ fun QuizDetailScreen(
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = DetailAccent)
                         ) {
-                            Text("Start Test", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                text = if (uiState.activeAttemptId != null) "Làm tiếp" else "Start Test",
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
                 }

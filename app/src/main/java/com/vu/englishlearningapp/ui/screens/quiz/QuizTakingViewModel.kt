@@ -25,7 +25,8 @@ data class QuizTakingUiState(
     val isSubmitting: Boolean = false,
     val errorMessage: String? = null,
     val answerErrorMessage: String? = null,
-    val isFinished: Boolean = false
+    val isFinished: Boolean = false,
+    val isAlreadySubmitted: Boolean = false
 ) {
     val currentQuestion: QuestionDto?
         get() = questions.getOrNull(currentIndex)
@@ -72,6 +73,10 @@ class QuizTakingViewModel(
             try {
                 val startedAttempt = quizRepository.startAttempt(testId)
                 val attemptDetail = quizRepository.getAttempt(startedAttempt.attemptId)
+                if (attemptDetail.attempt.status == "submitted") {
+                    _uiState.value = QuizTakingUiState(isAlreadySubmitted = true)
+                    return@launch
+                }
                 val questions = quizRepository.getAttemptQuestions(startedAttempt.attemptId)
                 val savedAnswers = questions.mapNotNull { question ->
                     question.userAnswer?.let { question.id to it }
@@ -208,6 +213,20 @@ class QuizTakingViewModel(
         }
     }
 
+    fun checkAttemptStatus() {
+        val attemptId = _uiState.value.attemptId ?: return
+        viewModelScope.launch {
+            try {
+                val attemptDetail = quizRepository.getAttempt(attemptId)
+                if (attemptDetail.attempt.status == "submitted") {
+                    _uiState.value = _uiState.value.copy(isAlreadySubmitted = true)
+                }
+            } catch (e: Exception) {
+                // Ignore background check errors
+            }
+        }
+    }
+
     private fun storeResult(detail: AttemptDetailDto) {
         val attempt = detail.attempt
         val reviewItems = attempt.questions.map { question ->
@@ -218,13 +237,12 @@ class QuizTakingViewModel(
                 questionText = question.questionText,
                 userAnswer = userAnswer,
                 correctAnswer = correctAnswer,
-                isCorrect = question.answer?.isCorrect == true ||
-                    userAnswer.trim().equals(correctAnswer.trim(), ignoreCase = true)
+                isCorrect = question.answer?.isCorrect == true
             )
         }
         QuizResultHolder.result = QuizResult(
             testName = attempt.collectionTest?.testName ?: _uiState.value.testName,
-            score = reviewItems.count { it.isCorrect },
+            score = attempt.correctCount,
             total = attempt.collectionTest?.totalQuestions ?: reviewItems.size,
             reviewItems = reviewItems,
             startedTime = attempt.startedTime,

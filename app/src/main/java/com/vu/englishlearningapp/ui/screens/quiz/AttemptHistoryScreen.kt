@@ -191,10 +191,12 @@ private fun AttemptHistoryCard(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    HistoryValue(
-                        icon = Icons.Default.CheckCircle,
-                        text = "${attempt.result.correctCount}/${attempt.collectionTest?.totalQuestions ?: 0} correct"
-                    )
+                    if (attempt.status == "submitted") {
+                        HistoryValue(
+                            icon = Icons.Default.CheckCircle,
+                            text = "${attempt.result.correctCount}/${attempt.collectionTest?.totalQuestions ?: 0} correct"
+                        )
+                    }
                     HistoryValue(
                         icon = Icons.Default.Schedule,
                         text = attempt.totalTime ?: "--:--:--"

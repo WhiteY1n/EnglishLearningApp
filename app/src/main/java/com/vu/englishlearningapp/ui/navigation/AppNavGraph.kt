@@ -226,8 +226,11 @@ fun AppNavGraph(
                 viewModel = vm,
                 onQuizFinished = {
                     // Navigate to result and remove QuizTaking from back stack
+                    val currentRoute = navController.currentDestination?.route
                     navController.navigate(Screen.QuizResult.route) {
-                        popUpTo(Screen.QuizList.route)
+                        if (currentRoute != null) {
+                            popUpTo(currentRoute) { inclusive = true }
+                        }
                     }
                 },
                 onBackClick = { navController.popBackStack() }
@@ -242,7 +245,15 @@ fun AppNavGraph(
                 viewModel = vm,
                 onBackToQuizzes = {
                     // Pop back to QuizList (removes ResultScreen from stack)
-                    navController.popBackStack(Screen.QuizList.route, inclusive = false)
+                    val popped = navController.popBackStack(Screen.QuizList.route, inclusive = false)
+                    if (!popped) {
+                        // Fallback: navigate to QuizList and pop up to start destination
+                        navController.navigate(Screen.QuizList.route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = false
+                            }
+                        }
+                    }
                 }
             )
         }
@@ -274,6 +285,11 @@ fun AppNavGraph(
             )
             AttemptDetailScreen(
                 viewModel = vm,
+                onContinueTest = { testId ->
+                    navController.navigate(Screen.QuizTaking.createRoute(testId)) {
+                        popUpTo(Screen.AttemptHistory.route)
+                    }
+                },
                 onBackClick = { navController.popBackStack() }
             )
         }
