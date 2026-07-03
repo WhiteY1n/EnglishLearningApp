@@ -10,6 +10,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -18,26 +19,30 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = AppPrimary,
     onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primaryContainer = AppPrimaryContainer,
+    onPrimaryContainer = Color(0xFF18305F),
+    secondary = PurpleGrey40,
+    tertiary = Pink40,
+    background = AppScreenBackground,
+    surface = AppCardBackground,
+    surfaceContainer = AppCardBackground,
+    surfaceContainerLow = AppCardBackground,
+    surfaceContainerLowest = AppCardBackground,
+    surfaceVariant = AppCardBackground,
+    onBackground = Color(0xFF17191C),
+    onSurface = Color(0xFF17191C),
+    onSurfaceVariant = AppSecondaryText,
+    outline = Color(0xFFD7D9DE),
+    outlineVariant = Color(0xFFE4E3E0)
 )
 
 @Composable
 fun EnglishLearningAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

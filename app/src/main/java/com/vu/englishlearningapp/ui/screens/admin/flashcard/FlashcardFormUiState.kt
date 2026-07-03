@@ -11,6 +11,7 @@ data class FlashcardFormUiState(
     val isLoadingFlashcard: Boolean = false,
     val isSaving: Boolean = false,
     val isSaveSuccess: Boolean = false,
+    val successMessage: String? = null,
     val validationErrors: Map<String, String> = emptyMap(),
     val errorMessage: String? = null
 ) {

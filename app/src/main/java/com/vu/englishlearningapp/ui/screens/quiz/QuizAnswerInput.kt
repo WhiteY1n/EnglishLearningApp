@@ -2,6 +2,8 @@ package com.vu.englishlearningapp.ui.screens.quiz
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,14 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
@@ -26,13 +24,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.gson.JsonArray
@@ -209,7 +208,6 @@ private fun FillBlankAnswer(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MatchingAnswer(
     question: QuestionDto,
@@ -221,71 +219,138 @@ private fun MatchingAnswer(
     val selections = remember(question.id) {
         mutableStateMapOf<String, String>().apply { putAll(parseMatchingAnswer(answer)) }
     }
-    var expandedIndex by remember { mutableIntStateOf(-1) }
+    var selectedLeft by remember(question.id) { mutableStateOf<String?>(null) }
+    var selectedRight by remember(question.id) { mutableStateOf<String?>(null) }
     val rightOptions = pairs.map { it.right }.distinct()
+    val pairColors = listOf(
+        Color(0xFFE8F5EF) to Color(0xFF2E8B67),
+        Color(0xFFF1EAFB) to Color(0xFF7654A8),
+        Color(0xFFFFF1E5) to Color(0xFFB56B2A),
+        Color(0xFFE8F0FA) to Color(0xFF4968A8)
+    )
+    val publishAnswer = {
+        onAnswerChanged(
+            if (pairs.all { selections[it.left].isNullOrBlank().not() }) {
+                buildMatchingAnswer(pairs.map { it.left }, selections)
+            } else ""
+        )
+    }
 
     Column {
         Text(
-            "Select the matching value for each item.",
+            "Select one item from either column, then choose its match. Tap a matched item to remove the pair.",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 12.dp)
         )
-        pairs.forEachIndexed { index, pair ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = pair.left,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                ExposedDropdownMenuBox(
-                    expanded = expandedIndex == index,
-                    onExpandedChange = {
-                        if (enabled) expandedIndex = if (expandedIndex == index) -1 else index
-                    },
-                    modifier = Modifier.weight(1.3f)
-                ) {
-                    OutlinedTextField(
-                        value = selections[pair.left].orEmpty(),
-                        onValueChange = {},
-                        readOnly = true,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                pairs.forEachIndexed { index, pair ->
+                    val isSelected = selectedLeft == pair.left
+                    val isMatched = selections[pair.left] != null
+                    val colors = pairColors[index % pairColors.size]
+                    MatchingChoice(
+                        text = pair.left,
+                        selected = isSelected,
+                        backgroundColor = if (isMatched) colors.first else Color.White,
+                        borderColor = if (isMatched || isSelected) colors.second
+                        else MaterialTheme.colorScheme.outlineVariant,
                         enabled = enabled,
-                        label = { Text("Match") },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedIndex == index)
-                        },
-                        modifier = Modifier.fillMaxWidth().menuAnchor()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expandedIndex == index,
-                        onDismissRequest = { expandedIndex = -1 }
-                    ) {
-                        rightOptions
-                            .filter { right -> selections[pair.left] == right || right !in selections.values }
-                            .forEach { right ->
-                            DropdownMenuItem(
-                                text = { Text(right) },
-                                onClick = {
-                                    selections[pair.left] = right
-                                    expandedIndex = -1
-                                    if (pairs.all { selections[it.left].isNullOrBlank().not() }) {
-                                        onAnswerChanged(buildMatchingAnswer(pairs.map { it.left }, selections))
-                                    } else {
-                                        onAnswerChanged("")
+                        onClick = {
+                            val right = selectedRight
+                            val matchedRight = selections[pair.left]
+                            when {
+                                right != null -> {
+                                    selections.entries.firstOrNull { it.value == right }?.key?.let { key ->
+                                        selections.remove(key)
                                     }
+                                    selections[pair.left] = right
+                                    selectedLeft = null
+                                    selectedRight = null
+                                    publishAnswer()
                                 }
-                            )
+                                matchedRight != null && selectedLeft == null -> {
+                                    selections.remove(pair.left)
+                                    publishAnswer()
+                                }
+                                else -> {
+                                    selectedLeft = if (selectedLeft == pair.left) null else pair.left
+                                    selectedRight = null
+                                }
+                            }
                         }
-                    }
+                    )
+                }
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                rightOptions.forEach { right ->
+                    val matchedIndex = pairs.indexOfFirst { selections[it.left] == right }
+                    val isMatched = matchedIndex >= 0
+                    val isSelected = selectedRight == right
+                    val colors = pairColors[(matchedIndex.takeIf { it >= 0 } ?: 0) % pairColors.size]
+                    MatchingChoice(
+                        text = right,
+                        selected = isSelected,
+                        backgroundColor = if (isMatched) colors.first else Color.White,
+                        borderColor = when {
+                            isMatched -> colors.second
+                            isSelected -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.outlineVariant
+                        },
+                        enabled = enabled,
+                        onClick = {
+                            val left = selectedLeft
+                            val matchedLeft = selections.entries.firstOrNull { it.value == right }?.key
+                            when {
+                                left != null -> {
+                                    matchedLeft?.let { selections.remove(it) }
+                                    selections[left] = right
+                                    selectedLeft = null
+                                    selectedRight = null
+                                    publishAnswer()
+                                }
+                                matchedLeft != null && selectedRight == null -> {
+                                    selections.remove(matchedLeft)
+                                    publishAnswer()
+                                }
+                                else -> {
+                                    selectedRight = if (selectedRight == right) null else right
+                                    selectedLeft = null
+                                }
+                            }
+                        }
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MatchingChoice(
+    text: String,
+    selected: Boolean,
+    backgroundColor: Color,
+    borderColor: Color,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled, onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        color = backgroundColor,
+        border = BorderStroke(if (selected) 2.dp else 1.dp, borderColor)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 14.dp),
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 

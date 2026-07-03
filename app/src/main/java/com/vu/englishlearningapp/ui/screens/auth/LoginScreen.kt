@@ -1,27 +1,31 @@
 package com.vu.englishlearningapp.ui.screens.auth
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -33,9 +37,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -43,11 +47,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
-/**
- * Login screen UI.
- * Shows email/password fields, a login button, loading indicator, and error messages.
- */
+private val LoginPrimary = Color(0xFF3452FF)
+private val LoginText = Color(0xFF181A20)
+private val LoginSecondaryText = Color(0xFF7B8191)
+private val LoginBorder = Color(0xFFD8DCE5)
+
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,
@@ -55,70 +61,56 @@ fun LoginScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    var passwordVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    var passwordVisible by remember { mutableStateOf(false) }
 
-    // Navigate to home when login succeeds
     LaunchedEffect(uiState.isLoginSuccess) {
-        if (uiState.isLoginSuccess) {
-            onLoginSuccess()
-        }
+        if (uiState.isLoginSuccess) onLoginSuccess()
     }
-
-    // Show error in snackbar
     LaunchedEffect(uiState.errorMessage) {
-        uiState.errorMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
+        uiState.errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearErrorMessage()
         }
     }
 
     Scaffold(
+        containerColor = Color.White,
         snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { innerPadding ->
+    ) { scaffoldPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 32.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(scaffoldPadding)
+                .background(Color.White)
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
         ) {
-            // App icon
-            Icon(
-                imageVector = Icons.Default.School,
-                contentDescription = "App Logo",
-                modifier = Modifier.size(72.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // App title
+            Spacer(Modifier.height(92.dp))
             Text(
-                text = "English Learning",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                text = "Login",
+                color = LoginText,
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold
             )
-
+            Spacer(Modifier.height(8.dp))
             Text(
-                text = "Sign in to continue",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = "Welcome back to the app",
+                color = LoginSecondaryText,
+                fontSize = 15.sp
             )
+            Spacer(Modifier.height(44.dp))
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Email field
+            LoginFieldLabel("Email Address")
+            Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = uiState.email,
                 onValueChange = viewModel::onEmailChange,
-                label = { Text("Email") },
-                placeholder = { Text("admin@example.com") },
-                leadingIcon = {
-                    Icon(Icons.Default.Email, contentDescription = "Email icon")
-                },
+                placeholder = { Text("hello@example.com") },
                 singleLine = true,
+                enabled = !uiState.isLoading,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Next
@@ -126,31 +118,31 @@ fun LoginScreen(
                 keyboardActions = KeyboardActions(
                     onNext = { focusManager.moveFocus(FocusDirection.Down) }
                 ),
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading
+                shape = RoundedCornerShape(8.dp),
+                colors = loginFieldColors(),
+                modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Password field
+            Spacer(Modifier.height(22.dp))
+            LoginFieldLabel("Password")
+            Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = uiState.password,
                 onValueChange = viewModel::onPasswordChange,
-                label = { Text("Password") },
-                leadingIcon = {
-                    Icon(Icons.Default.Lock, contentDescription = "Password icon")
-                },
+                placeholder = { Text("Enter your password") },
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
                             imageVector = if (passwordVisible) Icons.Default.Visibility
                             else Icons.Default.VisibilityOff,
                             contentDescription = if (passwordVisible) "Hide password"
-                            else "Show password"
+                            else "Show password",
+                            tint = LoginSecondaryText
                         )
                     }
                 },
                 singleLine = true,
+                enabled = !uiState.isLoading,
                 visualTransformation = if (passwordVisible) VisualTransformation.None
                 else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(
@@ -163,36 +155,67 @@ fun LoginScreen(
                         viewModel.login()
                     }
                 ),
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading
+                shape = RoundedCornerShape(8.dp),
+                colors = loginFieldColors(),
+                modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Login button
+            Spacer(Modifier.height(30.dp))
             Button(
                 onClick = {
                     focusManager.clearFocus()
                     viewModel.login()
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                enabled = !uiState.isLoading
+                enabled = !uiState.isLoading,
+                shape = RoundedCornerShape(24.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = LoginPrimary),
+                modifier = Modifier.fillMaxWidth().height(52.dp)
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(22.dp),
+                        color = Color.White,
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text(
-                        text = "Sign In",
-                        style = MaterialTheme.typography.labelLarge
-                    )
+                    Text("Login", fontSize = 15.sp, fontWeight = FontWeight.Medium)
                 }
+            }
+
+            Spacer(Modifier.height(96.dp))
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 28.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "English Learning",
+                    color = LoginSecondaryText,
+                    fontSize = 13.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
             }
         }
     }
 }
+
+@Composable
+private fun LoginFieldLabel(text: String) {
+    Text(
+        text = text,
+        color = LoginText,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Medium
+    )
+}
+
+@Composable
+private fun loginFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = LoginPrimary,
+    unfocusedBorderColor = LoginBorder,
+    focusedContainerColor = Color.White,
+    unfocusedContainerColor = Color.White,
+    cursorColor = LoginPrimary,
+    focusedPlaceholderColor = LoginSecondaryText.copy(alpha = 0.65f),
+    unfocusedPlaceholderColor = LoginSecondaryText.copy(alpha = 0.65f)
+)

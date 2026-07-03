@@ -11,6 +11,10 @@ import com.vu.englishlearningapp.data.remote.dto.quiz.AttemptHistoryDto
 import com.vu.englishlearningapp.data.remote.dto.common.MetaDto
 import com.vu.englishlearningapp.data.remote.dto.quiz.CollectionTestRequestDto
 import com.vu.englishlearningapp.data.remote.dto.quiz.TestTypeDto
+import com.vu.englishlearningapp.core.network.BackendActionResult
+import com.vu.englishlearningapp.core.network.BackendResult
+import com.vu.englishlearningapp.core.network.requireBackendData
+import com.vu.englishlearningapp.core.network.requireBackendSuccess
 
 /**
  * Repository for quiz/test operations.
@@ -51,16 +55,14 @@ class QuizRepository(private val quizApi: QuizApi) {
 
     suspend fun getTestTypes(): List<TestTypeDto> = quizApi.getTestTypes().requireData()
 
-    suspend fun createTest(request: CollectionTestRequestDto): CollectionTestDetailDto =
-        quizApi.createTest(request).requireData()
+    suspend fun createTest(request: CollectionTestRequestDto): BackendResult<CollectionTestDetailDto> =
+        quizApi.createTest(request).requireBackendData()
 
-    suspend fun updateTest(id: Int, request: CollectionTestRequestDto): CollectionTestDetailDto =
-        quizApi.updateTest(id, request).requireData()
+    suspend fun updateTest(id: Int, request: CollectionTestRequestDto): BackendResult<CollectionTestDetailDto> =
+        quizApi.updateTest(id, request).requireBackendData()
 
-    suspend fun deleteTest(id: Int) {
-        val response = quizApi.deleteTest(id)
-        if (response.statusCode !in 200..204) throw Exception(response.message)
-    }
+    suspend fun deleteTest(id: Int): BackendActionResult =
+        quizApi.deleteTest(id).requireBackendSuccess()
 
     suspend fun startAttempt(testId: Int): StartAttemptDto {
         val response = quizApi.startAttempt(testId)
@@ -77,7 +79,7 @@ class QuizRepository(private val quizApi: QuizApi) {
         return response.requireData()
     }
 
-    suspend fun saveAnswer(attemptId: Int, questionId: Int, userAnswer: String) {
+    suspend fun saveAnswer(attemptId: Int, questionId: Int, userAnswer: Any) {
         val response = quizApi.saveAnswer(
             attemptId = attemptId,
             request = SaveAnswerRequestDto(questionId, userAnswer)

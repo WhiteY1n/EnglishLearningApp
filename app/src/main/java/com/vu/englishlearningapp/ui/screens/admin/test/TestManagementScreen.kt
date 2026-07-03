@@ -67,8 +67,15 @@ fun TestManagementScreen(
             viewModel.clearError()
         }
     }
+    LaunchedEffect(uiState.successMessage) {
+        uiState.successMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearSuccessMessage()
+        }
+    }
 
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             AppTopNavigationBar(
                 title = "Manage Tests",

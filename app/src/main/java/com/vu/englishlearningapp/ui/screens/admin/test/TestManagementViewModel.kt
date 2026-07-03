@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vu.englishlearningapp.data.remote.dto.quiz.CollectionTestDto
 import com.vu.englishlearningapp.data.repository.QuizRepository
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +21,7 @@ data class TestManagementUiState(
     val isLoading: Boolean = false,
     val deletingTest: CollectionTestDto? = null,
     val isDeleting: Boolean = false,
+    val successMessage: String? = null,
     val errorMessage: String? = null
 )
 
@@ -63,21 +65,26 @@ class TestManagementViewModel(private val repository: QuizRepository) : ViewMode
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isDeleting = true, errorMessage = null)
             try {
-                repository.deleteTest(test.id)
+                val result = repository.deleteTest(test.id)
                 val targetPage = if (_uiState.value.tests.size == 1 && _uiState.value.currentPage > 1) {
                     _uiState.value.currentPage - 1
                 } else _uiState.value.currentPage
-                _uiState.value = _uiState.value.copy(deletingTest = null, isDeleting = false)
+                _uiState.value = _uiState.value.copy(
+                    deletingTest = null,
+                    isDeleting = false,
+                    successMessage = result.message
+                )
                 loadPage(targetPage)
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isDeleting = false,
-                    errorMessage = exception.message ?: "Failed to delete test"
+                    errorMessage = exception.toBackendMessage()
                 )
             }
         }
     }
     fun clearError() { _uiState.value = _uiState.value.copy(errorMessage = null) }
+    fun clearSuccessMessage() { _uiState.value = _uiState.value.copy(successMessage = null) }
 
     private fun loadPage(page: Int) {
         viewModelScope.launch {

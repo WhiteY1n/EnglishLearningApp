@@ -43,7 +43,10 @@ fun QuestionFormScreen(
     var typeMenuExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.isSaveSuccess) {
-        if (uiState.isSaveSuccess) onSaveSuccess()
+        if (uiState.isSaveSuccess) {
+            uiState.successMessage?.let { snackbarHostState.showSnackbar(it) }
+            onSaveSuccess()
+        }
     }
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let {
@@ -53,6 +56,7 @@ fun QuestionFormScreen(
     }
 
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             AppTopNavigationBar(
                 title = if (isEditMode) "Edit Question" else "Create Question",

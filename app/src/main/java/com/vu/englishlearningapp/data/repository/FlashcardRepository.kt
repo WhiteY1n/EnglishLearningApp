@@ -8,6 +8,10 @@ import com.vu.englishlearningapp.data.remote.dto.flashcard.FlashcardRequestDto
 import com.vu.englishlearningapp.data.remote.dto.flashcard.WordTypeDto
 import com.vu.englishlearningapp.data.remote.dto.flashcard.AttachFlashcardsRequestDto
 import com.vu.englishlearningapp.data.remote.dto.common.MetaDto
+import com.vu.englishlearningapp.core.network.BackendActionResult
+import com.vu.englishlearningapp.core.network.BackendResult
+import com.vu.englishlearningapp.core.network.requireBackendData
+import com.vu.englishlearningapp.core.network.requireBackendSuccess
 
 /**
  * Repository for flashcard operations.
@@ -72,28 +76,26 @@ class FlashcardRepository(private val flashcardApi: FlashcardApi) {
         return response.data
     }
 
-    suspend fun createFlashcard(originalWord: String, translatedWord: String, wordTypeId: Int): FlashcardDto {
-        val response = flashcardApi.createFlashcard(FlashcardRequestDto(originalWord, translatedWord, wordTypeId))
-        if (response.statusCode !in 200..201 || response.data == null) {
-            throw Exception(response.message)
-        }
-        return response.data
-    }
+    suspend fun createFlashcard(
+        originalWord: String,
+        translatedWord: String,
+        wordTypeId: Int
+    ): BackendResult<FlashcardDto> = flashcardApi.createFlashcard(
+        FlashcardRequestDto(originalWord, translatedWord, wordTypeId)
+    ).requireBackendData()
 
-    suspend fun updateFlashcard(id: Int, originalWord: String, translatedWord: String, wordTypeId: Int): FlashcardDto {
-        val response = flashcardApi.updateFlashcard(id, FlashcardRequestDto(originalWord, translatedWord, wordTypeId))
-        if (response.statusCode != 200 || response.data == null) {
-            throw Exception(response.message)
-        }
-        return response.data
-    }
+    suspend fun updateFlashcard(
+        id: Int,
+        originalWord: String,
+        translatedWord: String,
+        wordTypeId: Int
+    ): BackendResult<FlashcardDto> = flashcardApi.updateFlashcard(
+        id,
+        FlashcardRequestDto(originalWord, translatedWord, wordTypeId)
+    ).requireBackendData()
 
-    suspend fun deleteFlashcard(id: Int) {
-        val response = flashcardApi.deleteFlashcard(id)
-        if (response.statusCode !in 200..204) {
-            throw Exception(response.message)
-        }
-    }
+    suspend fun deleteFlashcard(id: Int): BackendActionResult =
+        flashcardApi.deleteFlashcard(id).requireBackendSuccess()
 
     // --- Word Types ---
 

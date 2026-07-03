@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vu.englishlearningapp.data.remote.dto.flashcard.FlashcardDto
 import com.vu.englishlearningapp.data.repository.FlashcardRepository
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +21,7 @@ data class FlashcardManagementUiState(
     val isLoading: Boolean = false,
     val deletingFlashcard: FlashcardDto? = null,
     val isDeleting: Boolean = false,
+    val successMessage: String? = null,
     val errorMessage: String? = null
 )
 
@@ -79,8 +81,12 @@ class FlashcardManagementViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isDeleting = true, errorMessage = null)
             try {
-                flashcardRepository.deleteFlashcard(flashcard.id)
-                _uiState.value = _uiState.value.copy(deletingFlashcard = null, isDeleting = false)
+                val result = flashcardRepository.deleteFlashcard(flashcard.id)
+                _uiState.value = _uiState.value.copy(
+                    deletingFlashcard = null,
+                    isDeleting = false,
+                    successMessage = result.message
+                )
                 val targetPage = if (_uiState.value.flashcards.size == 1 && _uiState.value.currentPage > 1) {
                     _uiState.value.currentPage - 1
                 } else {
@@ -90,7 +96,7 @@ class FlashcardManagementViewModel(
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isDeleting = false,
-                    errorMessage = exception.message ?: "Failed to delete flashcard"
+                    errorMessage = exception.toBackendMessage()
                 )
             }
         }
@@ -98,6 +104,10 @@ class FlashcardManagementViewModel(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
+    }
+
+    fun clearSuccessMessage() {
+        _uiState.value = _uiState.value.copy(successMessage = null)
     }
 
     private fun loadPage(page: Int) {

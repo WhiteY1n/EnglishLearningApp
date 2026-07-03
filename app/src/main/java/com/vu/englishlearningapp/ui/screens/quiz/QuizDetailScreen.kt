@@ -39,8 +39,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
+import com.vu.englishlearningapp.ui.theme.AppScreenBackground
 
-private val DetailBackground = Color(0xFFFAF8F5)
+private val DetailBackground = AppScreenBackground
 private val DetailAccent = Color(0xFF4968A8)
 private val DetailSecondaryText = Color(0xFF697386)
 
@@ -54,6 +55,7 @@ fun QuizDetailScreen(
 
     Scaffold(
         containerColor = DetailBackground,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             AppTopNavigationBar(
                 title = "Test details",

@@ -53,6 +53,7 @@ fun FlashcardFormScreen(
 
     LaunchedEffect(uiState.isSaveSuccess) {
         if (uiState.isSaveSuccess) {
+            uiState.successMessage?.let { snackbarHostState.showSnackbar(it) }
             onSaveSuccess()
         }
     }
@@ -65,6 +66,7 @@ fun FlashcardFormScreen(
     }
 
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             AppTopNavigationBar(
                 title = if (isEditMode) "Edit Flashcard" else "Create Flashcard",

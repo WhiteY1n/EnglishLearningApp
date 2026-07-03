@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -67,7 +69,6 @@ fun HomeScreen(
                 description = "Build vocabulary with focused card collections",
                 category = HomeCategory.LEARN,
                 icon = Icons.Default.Style,
-                accentColor = HomeColors.SkyBlue,
                 onClick = onFlashcardsClick
             )
         )
@@ -77,7 +78,6 @@ fun HomeScreen(
                 description = "Check your progress with interactive tests",
                 category = HomeCategory.TEST,
                 icon = Icons.Default.Quiz,
-                accentColor = HomeColors.SoftPurple,
                 onClick = onQuizzesClick
             )
         )
@@ -87,7 +87,6 @@ fun HomeScreen(
                 description = "Review and update your personal information",
                 category = HomeCategory.ACCOUNT,
                 icon = Icons.Default.Person,
-                accentColor = HomeColors.SoftGreen,
                 onClick = onProfileClick
             )
         )
@@ -98,7 +97,6 @@ fun HomeScreen(
                     description = "Manage learning content and system data",
                     category = HomeCategory.ADMIN,
                     icon = Icons.Default.AdminPanelSettings,
-                    accentColor = HomeColors.SoftOrange,
                     onClick = onAdminDashboardClick
                 )
             )
@@ -115,7 +113,8 @@ fun HomeScreen(
     }
 
     Scaffold(
-        containerColor = HomeColors.Background
+        containerColor = HomeColors.Background,
+        contentWindowInsets = WindowInsets.statusBars
     ) { innerPadding ->
         when {
             uiState.isLoading && uiState.user == null -> {

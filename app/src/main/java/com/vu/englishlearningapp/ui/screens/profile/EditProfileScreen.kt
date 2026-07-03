@@ -70,6 +70,7 @@ fun EditProfileScreen(
     }
 
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             AppTopNavigationBar(
                 title = "Edit Profile",

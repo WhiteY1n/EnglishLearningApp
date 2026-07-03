@@ -1,12 +1,14 @@
 package com.vu.englishlearningapp.ui.screens.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,18 +28,21 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.annotation.DrawableRes
+import com.vu.englishlearningapp.R
+import com.vu.englishlearningapp.ui.components.AppSearchField
 
 @Composable
 internal fun HomeHeader(
@@ -105,22 +110,10 @@ internal fun HomeSearchField(
     query: String,
     onQueryChange: (String) -> Unit
 ) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = Modifier.fillMaxWidth(),
-        placeholder = { Text("Search modules...") },
-        leadingIcon = {
-            Icon(Icons.Default.Search, contentDescription = null)
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(28.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            focusedBorderColor = HomeColors.AccentBlue,
-            unfocusedBorderColor = Color.Transparent
-        )
+    AppSearchField(
+        query = query,
+        onQueryChange = onQueryChange,
+        placeholder = "Search modules..."
     )
 }
 
@@ -136,6 +129,7 @@ internal fun HomeRecommendations(
             badge = "Flashcards",
             icon = Icons.Default.Style,
             colors = listOf(Color(0xFFDDECF4), Color(0xFFCDE2ED)),
+            backgroundRes = R.drawable.home_flashcard_vocabulary,
             onClick = onFlashcardsClick
         ),
         Recommendation(
@@ -144,6 +138,7 @@ internal fun HomeRecommendations(
             badge = "Quizzes",
             icon = Icons.Default.Quiz,
             colors = listOf(Color(0xFFE7E0F7), Color(0xFFD8CEF0)),
+            backgroundRes = R.drawable.home_quiz_study,
             onClick = onQuizzesClick
         )
     )
@@ -177,9 +172,28 @@ private fun RecommendationCard(recommendation: Recommendation) {
                 .fillMaxWidth()
                 .height(190.dp)
                 .background(Brush.linearGradient(recommendation.colors))
-                .padding(18.dp)
         ) {
-            Column(modifier = Modifier.align(Alignment.BottomStart)) {
+            recommendation.backgroundRes?.let { backgroundRes ->
+                Image(
+                    painter = painterResource(backgroundRes),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color.Transparent, Color.Black.copy(alpha = 0.68f))
+                            )
+                        )
+                )
+            }
+
+            Column(
+                modifier = Modifier.align(Alignment.BottomStart).padding(18.dp)
+            ) {
                 Text(
                     text = recommendation.badge,
                     style = MaterialTheme.typography.labelMedium,
@@ -194,18 +208,21 @@ private fun RecommendationCard(recommendation: Recommendation) {
                     text = recommendation.title,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = HomeColors.PrimaryText
+                    color = if (recommendation.backgroundRes != null) Color.White
+                    else HomeColors.PrimaryText
                 )
                 Text(
                     text = recommendation.subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = HomeColors.SecondaryText
+                    color = if (recommendation.backgroundRes != null) Color.White.copy(alpha = 0.82f)
+                    else HomeColors.SecondaryText
                 )
             }
 
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
+                    .padding(18.dp)
                     .size(52.dp)
                     .clip(CircleShape)
                     .background(Color.White.copy(alpha = 0.75f)),
@@ -228,5 +245,6 @@ private data class Recommendation(
     val badge: String,
     val icon: ImageVector,
     val colors: List<Color>,
+    @DrawableRes val backgroundRes: Int? = null,
     val onClick: () -> Unit
 )

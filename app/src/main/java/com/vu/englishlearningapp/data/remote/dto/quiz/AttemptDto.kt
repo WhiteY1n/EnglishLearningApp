@@ -87,7 +87,7 @@ data class AttemptAnswerDto(
 
 data class SaveAnswerRequestDto(
     @SerializedName("question_id") val questionId: Int,
-    @SerializedName("user_answer") val userAnswer: String
+    @SerializedName("user_answer") val userAnswer: Any
 )
 
 data class AttemptHistoryDto(

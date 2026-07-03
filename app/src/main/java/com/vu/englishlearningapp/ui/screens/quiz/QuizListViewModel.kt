@@ -16,6 +16,9 @@ import kotlinx.coroutines.launch
 data class QuizListUiState(
     val tests: List<CollectionTestDto> = emptyList(),
     val selectedFilter: QuizFilter = QuizFilter.NEWEST,
+    val currentPage: Int = 1,
+    val lastPage: Int = 1,
+    val totalTests: Int = 0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -34,26 +37,44 @@ class QuizListViewModel(
     private val quizRepository: QuizRepository
 ) : ViewModel() {
 
-    private var allTests: List<CollectionTestDto> = emptyList()
+    private var currentPageTests: List<CollectionTestDto> = emptyList()
 
     private val _uiState = MutableStateFlow(QuizListUiState())
     val uiState: StateFlow<QuizListUiState> = _uiState.asStateFlow()
 
     init {
-        loadTests()
+        loadPage(1)
     }
 
-    /**
-     * Load all available tests from the API.
-     */
     fun loadTests() {
+        loadPage(_uiState.value.currentPage)
+    }
+
+    fun nextPage() {
+        val state = _uiState.value
+        if (!state.isLoading && state.currentPage < state.lastPage) {
+            loadPage(state.currentPage + 1)
+        }
+    }
+
+    fun previousPage() {
+        val state = _uiState.value
+        if (!state.isLoading && state.currentPage > 1) {
+            loadPage(state.currentPage - 1)
+        }
+    }
+
+    private fun loadPage(page: Int) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
-                val tests = quizRepository.getTests()
-                allTests = tests
+                val (tests, meta) = quizRepository.getTests(page = page)
+                currentPageTests = tests
                 _uiState.value = _uiState.value.copy(
                     tests = filterTests(tests, _uiState.value.selectedFilter),
+                    currentPage = meta?.currentPage ?: page,
+                    lastPage = meta?.lastPage ?: 1,
+                    totalTests = meta?.total ?: tests.size,
                     isLoading = false
                 )
             } catch (e: Exception) {
@@ -67,7 +88,7 @@ class QuizListViewModel(
 
     fun selectFilter(filter: QuizFilter) {
         _uiState.value = _uiState.value.copy(
-            tests = filterTests(allTests, filter),
+            tests = filterTests(currentPageTests, filter),
             selectedFilter = filter
         )
     }

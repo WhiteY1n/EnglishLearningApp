@@ -56,6 +56,7 @@ fun FlashcardStudyScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             AppTopNavigationBar(
                 title = uiState.collectionName.ifEmpty { "Flashcards" },

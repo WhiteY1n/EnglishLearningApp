@@ -52,7 +52,12 @@ fun TestFormScreen(
     var statusExpanded by remember { mutableStateOf(false) }
     var showQuestionPicker by remember { mutableStateOf(false) }
 
-    LaunchedEffect(state.isSaveSuccess) { if (state.isSaveSuccess) onSaveSuccess() }
+    LaunchedEffect(state.isSaveSuccess) {
+        if (state.isSaveSuccess) {
+            state.successMessage?.let { snackbar.showSnackbar(it) }
+            onSaveSuccess()
+        }
+    }
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
             snackbar.showSnackbar(it)
@@ -61,6 +66,7 @@ fun TestFormScreen(
     }
 
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             AppTopNavigationBar(
                 title = if (isEditMode) "Edit Test" else "Create Test",

@@ -116,7 +116,11 @@ class QuizTakingViewModel(
 
         viewModelScope.launch {
             try {
-                quizRepository.saveAnswer(attemptId, question.id, answer)
+                quizRepository.saveAnswer(
+                    attemptId = attemptId,
+                    questionId = question.id,
+                    userAnswer = question.toApiAnswer(answer)
+                )
                 val latest = _uiState.value
                 _uiState.value = latest.copy(isSavingAnswer = false)
                 if (latest.isLastQuestion) {
@@ -207,18 +211,25 @@ class QuizTakingViewModel(
     private fun storeResult(detail: AttemptDetailDto) {
         val attempt = detail.attempt
         val reviewItems = attempt.questions.map { question ->
+            val userAnswer = question.formatUserAnswer(question.answer?.userAnswer)
+            val correctAnswer = question.getCorrectAnswer()
             ReviewItem(
+                questionId = question.id,
                 questionText = question.questionText,
-                userAnswer = question.formatUserAnswer(question.answer?.userAnswer),
-                correctAnswer = question.getCorrectAnswer(),
-                isCorrect = question.answer?.isCorrect == true
+                userAnswer = userAnswer,
+                correctAnswer = correctAnswer,
+                isCorrect = question.answer?.isCorrect == true ||
+                    userAnswer.trim().equals(correctAnswer.trim(), ignoreCase = true)
             )
         }
         QuizResultHolder.result = QuizResult(
             testName = attempt.collectionTest?.testName ?: _uiState.value.testName,
-            score = attempt.correctCount,
+            score = reviewItems.count { it.isCorrect },
             total = attempt.collectionTest?.totalQuestions ?: reviewItems.size,
-            reviewItems = reviewItems
+            reviewItems = reviewItems,
+            startedTime = attempt.startedTime,
+            finishedTime = attempt.finishedTime,
+            totalTime = attempt.totalTime
         )
     }
 

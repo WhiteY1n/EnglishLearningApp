@@ -41,6 +41,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
+import com.vu.englishlearningapp.ui.components.AppSearchField
 
 @Composable
 fun FlashcardManagementScreen(
@@ -59,8 +60,15 @@ fun FlashcardManagementScreen(
             viewModel.clearError()
         }
     }
+    LaunchedEffect(uiState.successMessage) {
+        uiState.successMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearSuccessMessage()
+        }
+    }
 
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             AppTopNavigationBar(
                 title = "Manage Flashcards",
@@ -80,29 +88,17 @@ fun FlashcardManagementScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            OutlinedTextField(
-                value = uiState.searchQuery,
-                onValueChange = viewModel::updateSearchQuery,
+            AppSearchField(
+                query = uiState.searchQuery,
+                onQueryChange = viewModel::updateSearchQuery,
+                placeholder = "Search flashcards",
                 modifier = Modifier
-                    .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp),
-                label = { Text("Search flashcards") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                trailingIcon = {
-                    if (uiState.searchQuery.isNotEmpty()) {
-                        IconButton(onClick = viewModel::clearSearch) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear search")
-                        }
-                    }
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(
-                    onSearch = {
-                        viewModel.applySearch()
-                        keyboardController?.hide()
-                    }
-                )
+                onClear = viewModel::clearSearch,
+                onSearch = {
+                    viewModel.applySearch()
+                    keyboardController?.hide()
+                }
             )
 
             when {

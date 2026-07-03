@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.vu.englishlearningapp.ui.theme.AppScreenBackground
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -36,7 +37,7 @@ import com.vu.englishlearningapp.data.remote.dto.auth.UserDto
 import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
 
 internal object ProfileColors {
-    val Background = Color(0xFFF7F7F7)
+    val Background = AppScreenBackground
     val Header = Color(0xFFE8F0F2)
     val PrimaryText = Color(0xFF17191C)
     val SecondaryText = Color(0xFF6F747C)

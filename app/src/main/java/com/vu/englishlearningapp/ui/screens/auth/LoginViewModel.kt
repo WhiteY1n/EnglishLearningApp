@@ -3,6 +3,7 @@ package com.vu.englishlearningapp.ui.screens.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import com.vu.englishlearningapp.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -69,10 +70,14 @@ class LoginViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Login failed. Please try again."
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }
+    }
+
+    fun clearErrorMessage() {
+        _uiState.value = _uiState.value.copy(errorMessage = null)
     }
 
     /**

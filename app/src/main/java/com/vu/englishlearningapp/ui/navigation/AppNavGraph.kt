@@ -59,6 +59,7 @@ import com.vu.englishlearningapp.ui.screens.quiz.QuizDetailViewModel
 import com.vu.englishlearningapp.ui.screens.quiz.QuizTakingScreen
 import com.vu.englishlearningapp.ui.screens.quiz.QuizTakingViewModel
 import com.vu.englishlearningapp.ui.screens.quiz.ResultScreen
+import com.vu.englishlearningapp.ui.screens.quiz.ResultViewModel
 import com.vu.englishlearningapp.ui.screens.quiz.AttemptHistoryScreen
 import com.vu.englishlearningapp.ui.screens.quiz.AttemptHistoryViewModel
 import com.vu.englishlearningapp.ui.screens.quiz.AttemptDetailScreen
@@ -234,7 +235,11 @@ fun AppNavGraph(
         }
 
         composable(Screen.QuizResult.route) {
+            val vm: ResultViewModel = viewModel(
+                factory = ResultViewModel.Factory(appContainer.questionRepository)
+            )
             ResultScreen(
+                viewModel = vm,
                 onBackToQuizzes = {
                     // Pop back to QuizList (removes ResultScreen from stack)
                     navController.popBackStack(Screen.QuizList.route, inclusive = false)
@@ -261,7 +266,11 @@ fun AppNavGraph(
         ) { backStackEntry ->
             val attemptId = backStackEntry.arguments?.getInt("attemptId") ?: return@composable
             val vm: AttemptDetailViewModel = viewModel(
-                factory = AttemptDetailViewModel.Factory(appContainer.quizRepository, attemptId)
+                factory = AttemptDetailViewModel.Factory(
+                    appContainer.quizRepository,
+                    appContainer.questionRepository,
+                    attemptId
+                )
             )
             AttemptDetailScreen(
                 viewModel = vm,

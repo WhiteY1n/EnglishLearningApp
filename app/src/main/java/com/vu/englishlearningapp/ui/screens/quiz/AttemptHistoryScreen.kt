@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -43,8 +44,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vu.englishlearningapp.data.remote.dto.quiz.AttemptHistoryDto
 import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
+import com.vu.englishlearningapp.ui.theme.AppScreenBackground
 
-private val HistoryBackground = Color(0xFFFAF8F5)
+private val HistoryBackground = AppScreenBackground
 private val HistoryAccent = Color(0xFF4968A8)
 private val HistorySecondaryText = Color(0xFF697386)
 
@@ -58,6 +60,7 @@ fun AttemptHistoryScreen(
 
     Scaffold(
         containerColor = HistoryBackground,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             AppTopNavigationBar(
                 title = "Test history",
@@ -92,7 +95,7 @@ fun AttemptHistoryScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 28.dp),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 item {

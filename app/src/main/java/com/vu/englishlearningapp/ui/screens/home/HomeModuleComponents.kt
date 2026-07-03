@@ -1,6 +1,7 @@
 package com.vu.englishlearningapp.ui.screens.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,7 +48,6 @@ internal data class HomeModule(
     val description: String,
     val category: HomeCategory,
     val icon: ImageVector,
-    val accentColor: Color,
     val onClick: () -> Unit
 )
 
@@ -56,10 +56,6 @@ internal object HomeColors {
     val PrimaryText = Color(0xFF17191C)
     val SecondaryText = Color(0xFF71767F)
     val AccentBlue = Color(0xFF9DB7F4)
-    val SkyBlue = Color(0xFFE3F0F5)
-    val SoftPurple = Color(0xFFEAE4F7)
-    val SoftGreen = Color(0xFFE3F1E8)
-    val SoftOrange = Color(0xFFF8E9D8)
 }
 
 @Composable
@@ -104,8 +100,9 @@ internal fun HomeModuleCard(module: HomeModule) {
             .fillMaxWidth()
             .height(94.dp),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = module.accentColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = BorderStroke(1.dp, Color(0xFFE6E7EA))
     ) {
         Row(
             modifier = Modifier
@@ -117,7 +114,7 @@ internal fun HomeModuleCard(module: HomeModule) {
                 modifier = Modifier
                     .size(62.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color.White.copy(alpha = 0.85f)),
+                    .background(Color(0xFFF4F5F7)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(

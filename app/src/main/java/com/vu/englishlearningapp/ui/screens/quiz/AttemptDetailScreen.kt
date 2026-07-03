@@ -35,6 +35,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import com.vu.englishlearningapp.data.remote.dto.quiz.AttemptDetailDto
 import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
 
@@ -84,7 +86,9 @@ fun AttemptDetailScreen(
 
             uiState.detail != null -> AttemptDetailContent(
                 detail = uiState.detail!!,
-                innerPadding = innerPadding
+                uiState = uiState,
+                innerPadding = innerPadding,
+                onQuestionClick = viewModel::loadQuestionDetail
             )
         }
     }
@@ -93,7 +97,9 @@ fun AttemptDetailScreen(
 @Composable
 private fun AttemptDetailContent(
     detail: AttemptDetailDto,
-    innerPadding: PaddingValues
+    uiState: AttemptDetailUiState,
+    innerPadding: PaddingValues,
+    onQuestionClick: (Int) -> Unit
 ) {
     val attempt = detail.attempt
     val isSubmitted = attempt.status == "submitted"
@@ -192,7 +198,9 @@ private fun AttemptDetailContent(
                 val answer = question.answer
                 val isCorrect = answer?.isCorrect == true
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onQuestionClick(question.id) },
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
@@ -221,6 +229,15 @@ private fun AttemptDetailContent(
                                 text = "Correct answer: ${question.getCorrectAnswer()}",
                                 color = MaterialTheme.colorScheme.error,
                                 fontWeight = FontWeight.Medium
+                            )
+                        }
+
+                        val isExpanded = uiState.expandedQuestionId == question.id
+                        AnimatedVisibility(visible = isExpanded) {
+                            QuestionInlinePreview(
+                                question = if (isExpanded) uiState.previewQuestion else null,
+                                isLoading = uiState.isQuestionLoading,
+                                error = uiState.questionError
                             )
                         }
                     }

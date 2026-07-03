@@ -1,5 +1,16 @@
 package com.vu.englishlearningapp.ui.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.History
@@ -7,13 +18,16 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 
 private data class BottomNavigationItem(
@@ -75,37 +89,56 @@ fun AppBottomNavigation(
     navController: NavHostController,
     currentRoute: String?
 ) {
-    NavigationBar(
-        containerColor = Color.White,
-        tonalElevation = 12.dp
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(12.dp)
+            .background(Color.White)
+            .navigationBarsPadding()
+            .height(74.dp)
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.Top
     ) {
         bottomNavigationItems.forEach { item ->
             val isSelected = currentRoute in item.relatedRoutes
-            NavigationBarItem(
-                selected = isSelected,
-                onClick = {
-                    if (!isSelected) {
-                        navController.navigate(item.route) {
-                            launchSingleTop = true
-                            restoreState = true
-                            popUpTo(Screen.Home.route) {
-                                saveState = true
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(74.dp)
+                    .clickable {
+                        if (!isSelected) {
+                            navController.navigate(item.route) {
+                                launchSingleTop = true
+                                restoreState = true
+                                popUpTo(Screen.Home.route) {
+                                    saveState = true
+                                }
                             }
                         }
-                    }
-                },
-                icon = {
-                    Icon(
-                        imageVector = item.icon,
-                        contentDescription = item.label
-                    )
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color(0xFF17191C),
-                    indicatorColor = Color(0xFFDDF3FF),
-                    unselectedIconColor = Color(0xFF71767F)
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(48.dp)
+                        .height(2.dp)
+                        .background(if (isSelected) Color(0xFF4968A8) else Color.Transparent)
                 )
-            )
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = item.label,
+                    modifier = Modifier.padding(top = 13.dp).size(23.dp),
+                    tint = if (isSelected) Color(0xFF4968A8) else Color(0xFF71767F)
+                )
+                Text(
+                    text = item.label,
+                    modifier = Modifier.padding(top = 5.dp),
+                    color = if (isSelected) Color(0xFF4968A8) else Color(0xFF484C52),
+                    fontSize = 11.sp,
+                    fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
+                    maxLines = 1
+                )
+            }
         }
     }
 }

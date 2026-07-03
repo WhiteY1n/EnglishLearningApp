@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vu.englishlearningapp.data.repository.FlashcardRepository
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -99,20 +100,27 @@ class FlashcardFormViewModel(
             try {
                 if (flashcardId == null) {
                     // Create mode
-                    val newFlashcard = flashcardRepository.createFlashcard(original, translated, wordTypeId!!)
+                    val result = flashcardRepository.createFlashcard(original, translated, wordTypeId!!)
                     collectionId?.let { id ->
-                        flashcardRepository.attachToCollection(id, listOf(newFlashcard.id))
+                        flashcardRepository.attachToCollection(id, listOf(result.data.id))
                     }
+                    _uiState.value = _uiState.value.copy(successMessage = result.message)
                 } else {
                     // Edit mode
-                    flashcardRepository.updateFlashcard(flashcardId, original, translated, wordTypeId!!)
+                    val result = flashcardRepository.updateFlashcard(
+                        flashcardId,
+                        original,
+                        translated,
+                        wordTypeId!!
+                    )
+                    _uiState.value = _uiState.value.copy(successMessage = result.message)
                 }
                 
                 _uiState.value = _uiState.value.copy(isSaving = false, isSaveSuccess = true)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,
-                    errorMessage = e.message ?: "Failed to save flashcard"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }

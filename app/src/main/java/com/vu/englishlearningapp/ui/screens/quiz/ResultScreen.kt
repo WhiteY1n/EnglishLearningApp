@@ -1,5 +1,7 @@
 package com.vu.englishlearningapp.ui.screens.quiz
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,42 +13,46 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
+import com.vu.englishlearningapp.ui.theme.AppScreenBackground
 
-/**
- * Screen showing quiz results after completion.
- * Displays score, percentage, and a review list of all questions
- * with the user's answer and the correct answer.
- */
-@OptIn(ExperimentalMaterial3Api::class)
+private val ResultAccent = Color(0xFF4968A8)
+private val ResultSecondary = Color(0xFF697386)
+
 @Composable
 fun ResultScreen(
+    viewModel: ResultViewModel,
     onBackToQuizzes: () -> Unit
 ) {
     val result = QuizResultHolder.result
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
+        containerColor = AppScreenBackground,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             AppTopNavigationBar(
                 title = "Quiz Result",
@@ -55,7 +61,6 @@ fun ResultScreen(
         }
     ) { innerPadding ->
         if (result == null) {
-            // No result data — shouldn't happen in normal flow
             Box(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 contentAlignment = Alignment.Center
@@ -71,16 +76,16 @@ fun ResultScreen(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding = PaddingValues(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 // --- Score Card ---
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
+                        shape = RoundedCornerShape(22.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(
                             modifier = Modifier
@@ -88,34 +93,56 @@ fun ResultScreen(
                                 .padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = null,
+                                tint = ResultAccent,
+                                modifier = Modifier.size(38.dp)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = result.testName,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold
                             )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Score
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Completed",
+                                color = Color(0xFF2E7D32),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Spacer(modifier = Modifier.height(18.dp))
                             Text(
                                 text = "${result.score} / ${result.total}",
-                                style = MaterialTheme.typography.displayMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = ResultAccent,
+                                fontSize = 38.sp,
+                                fontWeight = FontWeight.Bold
                             )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // Percentage
+                            
                             val percentage = if (result.total > 0) {
                                 (result.score * 100) / result.total
                             } else 0
-
+                            
                             Text(
-                                text = "$percentage% correct",
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                text = "$percentage% correct answers",
+                                color = ResultSecondary,
+                                style = MaterialTheme.typography.bodyMedium
                             )
+                        }
+                    }
+                }
+
+                // --- Details Card ---
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Column(modifier = Modifier.padding(18.dp)) {
+                            ResultInfoRow("Started", formatAttemptDate(result.startedTime))
+                            ResultInfoRow("Submitted", formatAttemptDate(result.finishedTime))
+                            ResultInfoRow("Time used", result.totalTime ?: "N/A")
                         }
                     }
                 }
@@ -123,75 +150,54 @@ fun ResultScreen(
                 // --- Review Header ---
                 item {
                     Text(
-                        text = "Review",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        text = "Answers",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 6.dp)
                     )
                 }
 
                 // --- Review Items ---
                 itemsIndexed(result.reviewItems) { index, item ->
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (item.isCorrect)
-                                MaterialTheme.colorScheme.secondaryContainer
-                            else
-                                MaterialTheme.colorScheme.errorContainer
-                        )
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.loadQuestionDetail(item.questionId) },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            // Question number with icon
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    imageVector = if (item.isCorrect) Icons.Default.CheckCircle
-                                    else Icons.Default.Cancel,
-                                    contentDescription = if (item.isCorrect) "Correct" else "Incorrect",
-                                    tint = if (item.isCorrect)
-                                        MaterialTheme.colorScheme.onSecondaryContainer
-                                    else
-                                        MaterialTheme.colorScheme.onErrorContainer,
+                                    imageVector = if (item.isCorrect) Icons.Default.CheckCircle else Icons.Default.Cancel,
+                                    contentDescription = null,
+                                    tint = if (item.isCorrect) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
                                     modifier = Modifier.size(20.dp)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Question ${index + 1}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (item.isCorrect)
-                                        MaterialTheme.colorScheme.onSecondaryContainer
-                                    else
-                                        MaterialTheme.colorScheme.onErrorContainer
-                                )
+                                Spacer(modifier = Modifier.size(8.dp))
+                                Text("Question ${index + 1}", fontWeight = FontWeight.Bold)
                             }
-
                             Spacer(modifier = Modifier.height(8.dp))
-
-                            // Question text
-                            Text(
-                                text = item.questionText,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // User's answer
+                            Text(item.questionText, style = MaterialTheme.typography.bodyLarge)
+                            Spacer(modifier = Modifier.height(10.dp))
                             Text(
                                 text = "Your answer: ${item.userAnswer}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (item.isCorrect)
-                                    MaterialTheme.colorScheme.onSecondaryContainer
-                                else
-                                    MaterialTheme.colorScheme.error
+                                color = ResultSecondary
                             )
-
-                            // Show correct answer if wrong
                             if (!item.isCorrect) {
                                 Text(
                                     text = "Correct answer: ${item.correctAnswer}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                    color = MaterialTheme.colorScheme.error,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+
+                            val isExpanded = uiState.expandedQuestionId == item.questionId
+                            AnimatedVisibility(visible = isExpanded) {
+                                QuestionInlinePreview(
+                                    question = if (isExpanded) uiState.previewQuestion else null,
+                                    isLoading = uiState.isQuestionLoading,
+                                    error = uiState.questionError
                                 )
                             }
                         }
@@ -205,7 +211,7 @@ fun ResultScreen(
                         onClick = onBackToQuizzes,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp)
+                            .height(52.dp)
                     ) {
                         Text(
                             text = "Back to Quizzes",
@@ -216,4 +222,22 @@ fun ResultScreen(
             }
         }
     }
+}
+
+@Composable
+private fun ResultInfoRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 7.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, color = ResultSecondary)
+        Text(value, fontWeight = FontWeight.Medium)
+    }
+}
+
+private fun formatAttemptDate(value: String?): String {
+    if (value.isNullOrBlank()) return "--"
+    return value.replace('T', ' ').substringBefore('.').removeSuffix("Z").take(16)
 }

@@ -9,6 +9,7 @@ import com.vu.englishlearningapp.data.remote.dto.question.AdminQuestionDto
 import com.vu.englishlearningapp.data.remote.dto.question.QuestionRequestDto
 import com.vu.englishlearningapp.data.remote.dto.question.QuestionTypeDto
 import com.vu.englishlearningapp.data.repository.QuestionRepository
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +29,7 @@ data class QuestionFormUiState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val isSaveSuccess: Boolean = false,
+    val successMessage: String? = null,
     val errorMessage: String? = null,
     val validationErrors: Map<String, String> = emptyMap()
 ) {
@@ -157,13 +159,17 @@ class QuestionFormViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, errorMessage = null)
             try {
-                if (questionId == null) repository.createQuestion(request)
+                val result = if (questionId == null) repository.createQuestion(request)
                 else repository.updateQuestion(questionId, request)
-                _uiState.value = _uiState.value.copy(isSaving = false, isSaveSuccess = true)
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    isSaveSuccess = true,
+                    successMessage = result.message
+                )
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,
-                    errorMessage = exception.message ?: "Failed to save question"
+                    errorMessage = exception.toBackendMessage()
                 )
             }
         }
@@ -201,7 +207,7 @@ class QuestionFormViewModel(
         when (state.selectedType?.keyword) {
             "multiple_choice" -> {
                 add("options", JsonArray().apply { state.options.forEach { add(it.trim()) } })
-                addProperty("correct", state.correctOptionIndex)
+                addProperty("correct", state.options[state.correctOptionIndex].trim())
             }
             "true_false" -> addProperty("correct", state.trueFalseAnswer)
             "fill_in_blank" -> addProperty("answer", state.fillBlankAnswer.trim())

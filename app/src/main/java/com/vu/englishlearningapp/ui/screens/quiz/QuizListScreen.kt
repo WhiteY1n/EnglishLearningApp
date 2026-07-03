@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -32,6 +33,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -52,9 +54,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vu.englishlearningapp.data.remote.dto.quiz.CollectionTestDto
 import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
+import com.vu.englishlearningapp.ui.theme.AppCardBackground
+import com.vu.englishlearningapp.ui.theme.AppScreenBackground
 
-private val QuizScreenBackground = Color(0xFFFAF8F5)
-private val QuizCardBackground = Color.White
+private val QuizScreenBackground = AppScreenBackground
+private val QuizCardBackground = AppCardBackground
 private val QuizAccent = Color(0xFF4968A8)
 private val QuizSecondaryText = Color(0xFF697386)
 
@@ -69,6 +73,7 @@ fun QuizListScreen(
 
     Scaffold(
         containerColor = QuizScreenBackground,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             AppTopNavigationBar(
                 title = "Quizzes",
@@ -109,8 +114,14 @@ fun QuizListScreen(
 
             else -> QuizList(
                 tests = uiState.tests,
+                totalTests = uiState.totalTests,
+                currentPage = uiState.currentPage,
+                lastPage = uiState.lastPage,
+                isLoading = uiState.isLoading,
                 innerPadding = innerPadding,
-                onTestClick = onTestClick
+                onTestClick = onTestClick,
+                onPreviousPage = viewModel::previousPage,
+                onNextPage = viewModel::nextPage
             )
         }
     }
@@ -130,14 +141,20 @@ fun QuizListScreen(
 @Composable
 private fun QuizList(
     tests: List<CollectionTestDto>,
+    totalTests: Int,
+    currentPage: Int,
+    lastPage: Int,
+    isLoading: Boolean,
     innerPadding: PaddingValues,
-    onTestClick: (Int) -> Unit
+    onTestClick: (Int) -> Unit,
+    onPreviousPage: () -> Unit,
+    onNextPage: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(innerPadding),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 28.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
@@ -150,7 +167,7 @@ private fun QuizList(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "${tests.size} quizzes ready for practice",
+                    text = "$totalTests quizzes ready for practice",
                     color = QuizSecondaryText,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -159,6 +176,32 @@ private fun QuizList(
 
         items(tests, key = { it.id }) { test ->
             QuizCard(test = test, onClick = { onTestClick(test.id) })
+        }
+
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(
+                    onClick = onPreviousPage,
+                    enabled = currentPage > 1 && !isLoading
+                ) {
+                    Text("Previous")
+                }
+                Text(
+                    text = "Page $currentPage / $lastPage",
+                    color = QuizSecondaryText,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                OutlinedButton(
+                    onClick = onNextPage,
+                    enabled = currentPage < lastPage && !isLoading
+                ) {
+                    Text("Next")
+                }
+            }
         }
     }
 }

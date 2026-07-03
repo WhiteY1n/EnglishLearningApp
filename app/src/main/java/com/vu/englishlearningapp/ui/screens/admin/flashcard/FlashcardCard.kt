@@ -1,5 +1,6 @@
 package com.vu.englishlearningapp.ui.screens.admin.flashcard
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -20,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,7 +37,10 @@ fun FlashcardCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = BorderStroke(1.dp, Color(0xFFE6E7EA))
     ) {
         Row(
             modifier = Modifier
@@ -48,12 +54,12 @@ fun FlashcardCard(
                     text = flashcard.originalWord,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 
                 flashcard.wordType?.let { wordType ->
                     Surface(
-                        color = MaterialTheme.colorScheme.tertiaryContainer,
+                        color = Color(0xFFF4F5F7),
                         shape = MaterialTheme.shapes.small,
                         modifier = Modifier.padding(top = 4.dp)
                     ) {
@@ -61,7 +67,7 @@ fun FlashcardCard(
                             text = wordType.displayValue,
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -72,7 +78,7 @@ fun FlashcardCard(
             Text(
                 text = flashcard.translatedWord,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center
             )
@@ -82,14 +88,14 @@ fun FlashcardCard(
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Edit Flashcard",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = Color(0xFF697386)
                     )
                 }
                 IconButton(onClick = onDeleteClick) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Delete Flashcard",
-                        tint = MaterialTheme.colorScheme.error
+                        tint = Color(0xFF697386)
                     )
                 }
             }

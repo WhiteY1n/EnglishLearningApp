@@ -54,6 +54,29 @@ data class QuestionDto(
         }
         return if (correct.isJsonPrimitive) correct.asString else correct.toString()
     }
+
+    fun toApiAnswer(answer: String): Any {
+        val data = getQuestionDataObject()
+        return when (typeKeyword) {
+            "multiple_choice" -> {
+                val options = getOptions()
+                val selectedIndex = answer.toIntOrNull()?.takeIf { it in options.indices }
+                val selectedOption = selectedIndex?.let(options::get) ?: answer
+                val correct = data.get("correct")
+                when {
+                    correct?.isJsonPrimitive == true && correct.asJsonPrimitive.isNumber -> {
+                        selectedIndex ?: answer.toIntOrNull() ?: answer
+                    }
+                    else -> selectedOption
+                }
+            }
+            "true_false" -> {
+                val lower = answer.lowercase()
+                if (lower == "true" || lower == "1") "true" else "false"
+            }
+            else -> answer
+        }
+    }
 }
 
 internal fun JsonElement.toQuestionDataObject(): JsonObject {

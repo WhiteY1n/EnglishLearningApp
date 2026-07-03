@@ -4,6 +4,7 @@ package com.vu.englishlearningapp.ui.screens.quiz
  * Represents the result of a single question in the review.
  */
 data class ReviewItem(
+    val questionId: Int,
     val questionText: String,
     val userAnswer: String,
     val correctAnswer: String,
@@ -17,7 +18,10 @@ data class QuizResult(
     val testName: String,
     val score: Int,
     val total: Int,
-    val reviewItems: List<ReviewItem>
+    val reviewItems: List<ReviewItem>,
+    val startedTime: String? = null,
+    val finishedTime: String? = null,
+    val totalTime: String? = null
 )
 
 /**

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vu.englishlearningapp.data.remote.dto.question.AdminQuestionDto
 import com.vu.englishlearningapp.data.repository.QuestionRepository
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +21,7 @@ data class QuestionManagementUiState(
     val isLoading: Boolean = false,
     val deletingQuestion: AdminQuestionDto? = null,
     val isDeleting: Boolean = false,
+    val successMessage: String? = null,
     val errorMessage: String? = null
 )
 
@@ -71,16 +73,20 @@ class QuestionManagementViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isDeleting = true, errorMessage = null)
             try {
-                repository.deleteQuestion(question.id)
+                val result = repository.deleteQuestion(question.id)
                 val targetPage = if (_uiState.value.questions.size == 1 && _uiState.value.currentPage > 1) {
                     _uiState.value.currentPage - 1
                 } else _uiState.value.currentPage
-                _uiState.value = _uiState.value.copy(deletingQuestion = null, isDeleting = false)
+                _uiState.value = _uiState.value.copy(
+                    deletingQuestion = null,
+                    isDeleting = false,
+                    successMessage = result.message
+                )
                 loadPage(targetPage)
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isDeleting = false,
-                    errorMessage = exception.message ?: "Failed to delete question"
+                    errorMessage = exception.toBackendMessage()
                 )
             }
         }
@@ -88,6 +94,10 @@ class QuestionManagementViewModel(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
+    }
+
+    fun clearSuccessMessage() {
+        _uiState.value = _uiState.value.copy(successMessage = null)
     }
 
     private fun loadPage(page: Int) {

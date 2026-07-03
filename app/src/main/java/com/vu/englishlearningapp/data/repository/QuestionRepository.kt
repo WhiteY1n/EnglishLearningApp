@@ -5,6 +5,10 @@ import com.vu.englishlearningapp.data.remote.dto.common.MetaDto
 import com.vu.englishlearningapp.data.remote.dto.question.AdminQuestionDto
 import com.vu.englishlearningapp.data.remote.dto.question.QuestionRequestDto
 import com.vu.englishlearningapp.data.remote.dto.question.QuestionTypeDto
+import com.vu.englishlearningapp.core.network.BackendActionResult
+import com.vu.englishlearningapp.core.network.BackendResult
+import com.vu.englishlearningapp.core.network.requireBackendData
+import com.vu.englishlearningapp.core.network.requireBackendSuccess
 
 class QuestionRepository(private val questionApi: QuestionApi) {
     suspend fun getQuestions(
@@ -34,16 +38,14 @@ class QuestionRepository(private val questionApi: QuestionApi) {
         return allQuestions.distinctBy { it.id }
     }
 
-    suspend fun createQuestion(request: QuestionRequestDto): AdminQuestionDto =
-        questionApi.createQuestion(request).requireData()
+    suspend fun createQuestion(request: QuestionRequestDto): BackendResult<AdminQuestionDto> =
+        questionApi.createQuestion(request).requireBackendData()
 
-    suspend fun updateQuestion(id: Int, request: QuestionRequestDto): AdminQuestionDto =
-        questionApi.updateQuestion(id, request).requireData()
+    suspend fun updateQuestion(id: Int, request: QuestionRequestDto): BackendResult<AdminQuestionDto> =
+        questionApi.updateQuestion(id, request).requireBackendData()
 
-    suspend fun deleteQuestion(id: Int) {
-        val response = questionApi.deleteQuestion(id)
-        if (response.statusCode !in 200..204) throw Exception(response.message)
-    }
+    suspend fun deleteQuestion(id: Int): BackendActionResult =
+        questionApi.deleteQuestion(id).requireBackendSuccess()
 
     private fun <T> com.vu.englishlearningapp.data.remote.dto.auth.ApiResponse<T>.requireData(): T {
         if (statusCode !in 200..299 || data == null) throw Exception(message)

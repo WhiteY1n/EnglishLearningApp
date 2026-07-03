@@ -1,39 +1,32 @@
 package com.vu.englishlearningapp.ui.screens.quiz
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,14 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vu.englishlearningapp.data.remote.dto.quiz.QuestionDto
 import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
 
-/**
- * Screen for taking a quiz — one question at a time.
- * Shows multiple-choice options with radio buttons.
- * "Finish Quiz" on the last question triggers local scoring.
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuizTakingScreen(
     viewModel: QuizTakingViewModel,
@@ -59,14 +47,12 @@ fun QuizTakingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Navigate to result screen when quiz is finished
     LaunchedEffect(uiState.isFinished) {
-        if (uiState.isFinished) {
-            onQuizFinished()
-        }
+        if (uiState.isFinished) onQuizFinished()
     }
 
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             AppTopNavigationBar(
                 title = uiState.testName.ifEmpty { "Quiz" },
@@ -75,192 +61,196 @@ fun QuizTakingScreen(
         }
     ) { innerPadding ->
         when {
-            // Loading state
-            uiState.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(innerPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+            uiState.isLoading -> QuizStateContainer(innerPadding) {
+                CircularProgressIndicator()
             }
-            // Error state
+
             uiState.errorMessage != null && uiState.questions.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(innerPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = uiState.errorMessage!!,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(onClick = onBackClick) {
-                            Text("Back to quizzes")
-                        }
-                    }
+                QuizStateContainer(innerPadding) {
+                    Text(uiState.errorMessage.orEmpty(), color = MaterialTheme.colorScheme.error)
+                    Spacer(Modifier.height(12.dp))
+                    Button(onClick = onBackClick) { Text("Back to quizzes") }
                 }
             }
-            // Empty state
-            uiState.questions.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(innerPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "No questions in this quiz",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = onBackClick) {
-                            Text("Back to quizzes")
-                        }
-                    }
-                }
+
+            uiState.questions.isEmpty() -> QuizStateContainer(innerPadding) {
+                Text("No questions in this quiz", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(12.dp))
+                Button(onClick = onBackClick) { Text("Back to quizzes") }
             }
-            // Content — show current question
-            else -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(16.dp)
-                ) {
-                    // Progress indicator
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = uiState.progress,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+
+            else -> Column(
+                modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp)
+            ) {
+                QuizProgressHeader(
+                    progress = uiState.progress,
+                    remainingTime = uiState.formattedRemainingTime,
+                    isTimeWarning = uiState.remainingSeconds <= 60,
+                    progressFraction = (uiState.currentIndex + 1).toFloat() / uiState.questions.size
+                )
+                Spacer(Modifier.height(20.dp))
+                Box(modifier = Modifier.weight(1f)) {
+                    uiState.currentQuestion?.let { question ->
+                        QuizQuestionCard(
+                            question = question,
+                            questionNumber = uiState.currentIndex + 1,
+                            questionCount = uiState.questions.size,
+                            currentIndex = uiState.currentIndex,
+                            answer = uiState.currentSelectedAnswer,
+                            actionError = uiState.answerErrorMessage ?: uiState.errorMessage,
+                            isFirstQuestion = uiState.isFirstQuestion,
+                            isLastQuestion = uiState.isLastQuestion,
+                            isSavingAnswer = uiState.isSavingAnswer,
+                            isSubmitting = uiState.isSubmitting,
+                            remainingSeconds = uiState.remainingSeconds,
+                            hasCurrentAnswer = uiState.hasCurrentAnswer,
+                            onAnswerChanged = viewModel::updateAnswer,
+                            onPrevious = viewModel::previousQuestion,
+                            onNext = viewModel::saveAnswerAndContinue
                         )
-                        Text(
-                            text = uiState.formattedRemainingTime,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (uiState.remainingSeconds <= 60) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                MaterialTheme.colorScheme.onSurface
-                            }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    LinearProgressIndicator(
-                        progress = {
-                            (uiState.currentIndex + 1).toFloat() / uiState.questions.size
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Scrollable question content
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        uiState.currentQuestion?.let { question ->
-                            if (question.typeKeyword == "multiple_choice") {
-                                MultipleChoiceQuestionCard(
-                                    question = question,
-                                    questionNumber = uiState.currentIndex + 1,
-                                    answer = uiState.currentSelectedAnswer,
-                                    enabled = !uiState.isSavingAnswer && !uiState.isSubmitting,
-                                    onAnswerChanged = viewModel::updateAnswer
-                                )
-                            } else {
-                                Text(
-                                    text = question.questionText,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Spacer(modifier = Modifier.height(24.dp))
-                                QuizAnswerInput(
-                                    question = question,
-                                    answer = uiState.currentSelectedAnswer,
-                                    enabled = !uiState.isSavingAnswer && !uiState.isSubmitting,
-                                    onAnswerChanged = viewModel::updateAnswer
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    val actionError = uiState.answerErrorMessage ?: uiState.errorMessage
-                    if (actionError != null) {
-                        Text(
-                            text = actionError,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = viewModel::previousQuestion,
-                            enabled = !uiState.isFirstQuestion && !uiState.isSavingAnswer && !uiState.isSubmitting,
-                            modifier = Modifier.weight(1f).height(52.dp)
-                        ) {
-                            Text("‹  Previous")
-                        }
-                        Button(
-                            onClick = viewModel::saveAnswerAndContinue,
-                            modifier = Modifier.weight(1f).height(52.dp),
-                            enabled = uiState.hasCurrentAnswer &&
-                                !uiState.isSavingAnswer &&
-                                !uiState.isSubmitting &&
-                                uiState.remainingSeconds > 0
-                        ) {
-                            Text(
-                                text = when {
-                                    uiState.isSavingAnswer -> "Saving..."
-                                    uiState.isSubmitting -> "Submitting..."
-                                    uiState.isLastQuestion -> "Finish"
-                                    else -> "Next  ›"
-                                },
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                            .padding(top = 14.dp),
-                        horizontalArrangement = Arrangement.spacedBy(7.dp, Alignment.CenterHorizontally)
-                    ) {
-                        uiState.questions.forEachIndexed { index, _ ->
-                            Box(
-                                modifier = Modifier
-                                    .size(if (index == uiState.currentIndex) 10.dp else 7.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        if (index == uiState.currentIndex) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.outlineVariant
-                                    )
-                            )
-                        }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun QuizProgressHeader(
+    progress: String,
+    remainingTime: String,
+    isTimeWarning: Boolean,
+    progressFraction: Float
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(progress, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Text(
+            remainingTime,
+            fontWeight = FontWeight.Bold,
+            color = if (isTimeWarning) MaterialTheme.colorScheme.error
+            else MaterialTheme.colorScheme.onSurface
+        )
+    }
+    Spacer(Modifier.height(8.dp))
+    LinearProgressIndicator(
+        progress = { progressFraction },
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+private fun QuizQuestionCard(
+    question: QuestionDto,
+    questionNumber: Int,
+    questionCount: Int,
+    currentIndex: Int,
+    answer: String?,
+    actionError: String?,
+    isFirstQuestion: Boolean,
+    isLastQuestion: Boolean,
+    isSavingAnswer: Boolean,
+    isSubmitting: Boolean,
+    remainingSeconds: Int,
+    hasCurrentAnswer: Boolean,
+    onAnswerChanged: (String) -> Unit,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit
+) {
+    val inputEnabled = !isSavingAnswer && !isSubmitting
+    Card(
+        modifier = Modifier.fillMaxSize(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Surface(shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.primary) {
+                Text(
+                    text = "Question $questionNumber",
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp)
+                )
+            }
+            Text(
+                text = question.questionText,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 18.dp, bottom = 14.dp)
+            )
+            Column(
+                modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
+            ) {
+                QuizAnswerInput(
+                    question = question,
+                    answer = answer,
+                    enabled = inputEnabled,
+                    onAnswerChanged = onAnswerChanged
+                )
+            }
+            actionError?.let {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 10.dp)
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onPrevious,
+                    enabled = !isFirstQuestion && inputEnabled,
+                    modifier = Modifier.weight(1f).height(52.dp)
+                ) { Text("‹  Previous") }
+                Button(
+                    onClick = onNext,
+                    enabled = hasCurrentAnswer && inputEnabled && remainingSeconds > 0,
+                    modifier = Modifier.weight(1f).height(52.dp)
+                ) {
+                    Text(
+                        when {
+                            isSavingAnswer -> "Saving..."
+                            isSubmitting -> "Submitting..."
+                            isLastQuestion -> "Finish"
+                            else -> "Next  ›"
+                        }
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(top = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(7.dp, Alignment.CenterHorizontally)
+            ) {
+                repeat(questionCount) { index ->
+                    Box(
+                        modifier = Modifier
+                            .size(if (index == currentIndex) 10.dp else 7.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (index == currentIndex) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.outlineVariant
+                            )
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuizStateContainer(innerPadding: PaddingValues, content: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(innerPadding).padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) { content() }
 }

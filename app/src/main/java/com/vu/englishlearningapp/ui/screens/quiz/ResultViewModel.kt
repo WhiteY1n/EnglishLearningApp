@@ -4,53 +4,25 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vu.englishlearningapp.data.remote.dto.question.AdminQuestionDto
-import com.vu.englishlearningapp.data.remote.dto.quiz.AttemptDetailDto
 import com.vu.englishlearningapp.data.repository.QuestionRepository
-import com.vu.englishlearningapp.data.repository.QuizRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class AttemptDetailUiState(
-    val detail: AttemptDetailDto? = null,
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null,
+data class ResultUiState(
     val expandedQuestionId: Int? = null,
     val previewQuestion: AdminQuestionDto? = null,
     val isQuestionLoading: Boolean = false,
     val questionError: String? = null
 )
 
-class AttemptDetailViewModel(
-    private val quizRepository: QuizRepository,
-    private val questionRepository: QuestionRepository,
-    private val attemptId: Int
+class ResultViewModel(
+    private val questionRepository: QuestionRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(AttemptDetailUiState())
-    val uiState: StateFlow<AttemptDetailUiState> = _uiState.asStateFlow()
-
-    init {
-        loadAttempt()
-    }
-
-    fun loadAttempt() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            try {
-                _uiState.value = _uiState.value.copy(
-                    detail = quizRepository.getAttempt(attemptId),
-                    isLoading = false
-                )
-            } catch (exception: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = exception.message ?: "Failed to load attempt details"
-                )
-            }
-        }
-    }
+    private val _uiState = MutableStateFlow(ResultUiState())
+    val uiState: StateFlow<ResultUiState> = _uiState.asStateFlow()
 
     fun loadQuestionDetail(questionId: Int) {
         val current = _uiState.value
@@ -101,14 +73,12 @@ class AttemptDetailViewModel(
     }
 
     class Factory(
-        private val quizRepository: QuizRepository,
-        private val questionRepository: QuestionRepository,
-        private val attemptId: Int
+        private val questionRepository: QuestionRepository
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(AttemptDetailViewModel::class.java)) {
-                return AttemptDetailViewModel(quizRepository, questionRepository, attemptId) as T
+            if (modelClass.isAssignableFrom(ResultViewModel::class.java)) {
+                return ResultViewModel(questionRepository) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }

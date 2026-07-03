@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -50,9 +51,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vu.englishlearningapp.data.remote.dto.flashcard.FlashcardCollectionDto
 import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
+import com.vu.englishlearningapp.ui.theme.AppCardBackground
+import com.vu.englishlearningapp.ui.theme.AppScreenBackground
 
-private val FlashcardScreenBackground = Color(0xFFFAF8F5)
-private val FlashcardCardBackground = Color(0xFFFFFFFF)
+private val FlashcardScreenBackground = AppScreenBackground
+private val FlashcardCardBackground = AppCardBackground
 private val FlashcardAccent = Color(0xFF4968A8)
 private val FlashcardSecondaryText = Color(0xFF697386)
 
@@ -67,6 +70,7 @@ fun FlashcardCollectionListScreen(
 
     Scaffold(
         containerColor = FlashcardScreenBackground,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             AppTopNavigationBar(
                 title = "Flashcards",
@@ -144,7 +148,7 @@ private fun FlashcardCollectionContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 28.dp),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {

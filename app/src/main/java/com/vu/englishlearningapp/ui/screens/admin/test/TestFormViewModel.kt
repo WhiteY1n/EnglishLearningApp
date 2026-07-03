@@ -10,6 +10,7 @@ import com.vu.englishlearningapp.data.remote.dto.quiz.TestTypeDto
 import com.vu.englishlearningapp.data.repository.FlashcardRepository
 import com.vu.englishlearningapp.data.repository.QuestionRepository
 import com.vu.englishlearningapp.data.repository.QuizRepository
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,6 +37,7 @@ data class TestFormUiState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val isSaveSuccess: Boolean = false,
+    val successMessage: String? = null,
     val errorMessage: String? = null,
     val validationErrors: Map<String, String> = emptyMap()
 ) {
@@ -141,13 +143,17 @@ class TestFormViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, errorMessage = null)
             try {
-                if (testId == null) quizRepository.createTest(request)
+                val result = if (testId == null) quizRepository.createTest(request)
                 else quizRepository.updateTest(testId, request)
-                _uiState.value = _uiState.value.copy(isSaving = false, isSaveSuccess = true)
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    isSaveSuccess = true,
+                    successMessage = result.message
+                )
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,
-                    errorMessage = exception.message ?: "Failed to save test"
+                    errorMessage = exception.toBackendMessage()
                 )
             }
         }
