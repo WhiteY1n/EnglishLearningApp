@@ -34,7 +34,8 @@ private data class BottomNavigationItem(
     val label: String,
     val route: String,
     val icon: ImageVector,
-    val relatedRoutes: Set<String>
+    val relatedRoutes: Set<String>,
+    val requiredPermission: String? = null
 )
 
 private val bottomNavigationItems = listOf(
@@ -51,7 +52,8 @@ private val bottomNavigationItems = listOf(
         relatedRoutes = setOf(
             Screen.FlashcardCollections.route,
             Screen.FlashcardStudy.route
-        )
+        ),
+        requiredPermission = "flashcard.view"
     ),
     BottomNavigationItem(
         label = "Quizzes",
@@ -62,7 +64,8 @@ private val bottomNavigationItems = listOf(
             Screen.QuizDetail.route,
             Screen.QuizTaking.route,
             Screen.QuizResult.route
-        )
+        ),
+        requiredPermission = "quizzies.view"
     ),
     BottomNavigationItem(
         label = "History",
@@ -71,7 +74,8 @@ private val bottomNavigationItems = listOf(
         relatedRoutes = setOf(
             Screen.AttemptHistory.route,
             Screen.AttemptHistoryDetail.route
-        )
+        ),
+        requiredPermission = "attempt.history"
     ),
     BottomNavigationItem(
         label = "Profile",
@@ -87,7 +91,8 @@ private val bottomNavigationItems = listOf(
 @Composable
 fun AppBottomNavigation(
     navController: NavHostController,
-    currentRoute: String?
+    currentRoute: String?,
+    hasPermission: (String) -> Boolean
 ) {
     Row(
         modifier = Modifier
@@ -99,7 +104,11 @@ fun AppBottomNavigation(
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.Top
     ) {
-        bottomNavigationItems.forEach { item ->
+        bottomNavigationItems
+            .filter { item ->
+                item.requiredPermission == null || hasPermission(item.requiredPermission)
+            }
+            .forEach { item ->
             val isSelected = currentRoute in item.relatedRoutes
             Column(
                 modifier = Modifier

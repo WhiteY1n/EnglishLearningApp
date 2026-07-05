@@ -3,6 +3,7 @@ package com.vu.englishlearningapp.ui.screens.quiz
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import com.vu.englishlearningapp.data.remote.dto.quiz.CollectionTestDetailDto
 import com.vu.englishlearningapp.data.repository.QuizRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,7 +59,7 @@ class QuizDetailViewModel(
                 )
             } catch (exception: Exception) {
                 _uiState.value = QuizDetailUiState(
-                    errorMessage = exception.message ?: "Failed to load test details"
+                    errorMessage = exception.toBackendMessage()
                 )
             }
         }

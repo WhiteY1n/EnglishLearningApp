@@ -18,11 +18,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.vu.englishlearningapp.di.AppContainer
+import com.vu.englishlearningapp.core.permission.PermissionViewModel
+import com.vu.englishlearningapp.ui.components.PermissionGuard
 import com.vu.englishlearningapp.ui.screens.auth.LoginScreen
 import com.vu.englishlearningapp.ui.screens.auth.LoginViewModel
 import com.vu.englishlearningapp.ui.screens.admin.dashboard.AdminDashboardScreen
 import com.vu.englishlearningapp.ui.screens.admin.dashboard.DashboardViewModel
 import com.vu.englishlearningapp.ui.screens.admin.users.UserManagementScreen
+import com.vu.englishlearningapp.ui.screens.admin.users.UserManagementViewModel
+import com.vu.englishlearningapp.ui.screens.admin.users.UserDetailScreen
+import com.vu.englishlearningapp.ui.screens.admin.users.UserDetailViewModel
+import com.vu.englishlearningapp.ui.screens.admin.users.UserFormScreen
+import com.vu.englishlearningapp.ui.screens.admin.users.UserFormViewModel
 import com.vu.englishlearningapp.ui.screens.admin.collection.CollectionDetailScreen
 import com.vu.englishlearningapp.ui.screens.admin.collection.CollectionDetailViewModel
 import com.vu.englishlearningapp.ui.screens.admin.collection.CollectionListScreen
@@ -38,6 +45,14 @@ import com.vu.englishlearningapp.ui.screens.admin.question.QuestionFormScreen
 import com.vu.englishlearningapp.ui.screens.admin.question.QuestionFormViewModel
 import com.vu.englishlearningapp.ui.screens.admin.question.QuestionManagementScreen
 import com.vu.englishlearningapp.ui.screens.admin.question.QuestionManagementViewModel
+import com.vu.englishlearningapp.ui.screens.admin.permission.PermissionFormScreen
+import com.vu.englishlearningapp.ui.screens.admin.permission.PermissionFormViewModel
+import com.vu.englishlearningapp.ui.screens.admin.permission.PermissionManagementScreen
+import com.vu.englishlearningapp.ui.screens.admin.permission.PermissionManagementViewModel
+import com.vu.englishlearningapp.ui.screens.admin.role.RoleFormScreen
+import com.vu.englishlearningapp.ui.screens.admin.role.RoleFormViewModel
+import com.vu.englishlearningapp.ui.screens.admin.role.RoleManagementScreen
+import com.vu.englishlearningapp.ui.screens.admin.role.RoleManagementViewModel
 import com.vu.englishlearningapp.ui.screens.admin.test.TestFormScreen
 import com.vu.englishlearningapp.ui.screens.admin.test.TestFormViewModel
 import com.vu.englishlearningapp.ui.screens.admin.test.TestManagementScreen
@@ -77,8 +92,17 @@ fun AppNavGraph(
     navController: NavHostController,
     appContainer: AppContainer,
     startDestination: String,
+    permissionViewModel: PermissionViewModel,
     modifier: Modifier = Modifier
 ) {
+    val permissionState by permissionViewModel.uiState.collectAsState()
+
+    LaunchedEffect(startDestination) {
+        if (startDestination != Screen.Login.route) {
+            permissionViewModel.loadPermissions()
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -117,6 +141,7 @@ fun AppNavGraph(
             LoginScreen(
                 viewModel = loginViewModel,
                 onLoginSuccess = {
+                    permissionViewModel.loadPermissions(forceRefresh = true)
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
@@ -153,65 +178,99 @@ fun AppNavGraph(
         // --- Flashcard Flow ---
 
         composable(Screen.FlashcardCollections.route) {
-            val vm: FlashcardCollectionListViewModel = viewModel(
-                factory = FlashcardCollectionListViewModel.Factory(appContainer.flashcardRepository)
-            )
-            FlashcardCollectionListScreen(
-                viewModel = vm,
-                onCollectionClick = { collectionId ->
-                    navController.navigate(Screen.FlashcardStudy.createRoute(collectionId))
-                },
+            PermissionGuard(
+                permissionName = "flashcard.view",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                val vm: FlashcardCollectionListViewModel = viewModel(
+                    factory = FlashcardCollectionListViewModel.Factory(appContainer.flashcardRepository)
+                )
+                FlashcardCollectionListScreen(
+                    viewModel = vm,
+                    onCollectionClick = { collectionId ->
+                        navController.navigate(Screen.FlashcardStudy.createRoute(collectionId))
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(
             route = Screen.FlashcardStudy.route,
             arguments = listOf(navArgument("collectionId") { type = NavType.IntType })
         ) { backStackEntry ->
-            val collectionId = backStackEntry.arguments?.getInt("collectionId") ?: return@composable
-            val vm: FlashcardStudyViewModel = viewModel(
-                factory = FlashcardStudyViewModel.Factory(
-                    appContainer.flashcardRepository,
-                    collectionId
-                )
-            )
-            FlashcardStudyScreen(
-                viewModel = vm,
+            PermissionGuard(
+                permissionName = "flashcard.view",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                val collectionId = backStackEntry.arguments?.getInt("collectionId") ?: return@PermissionGuard
+                val vm: FlashcardStudyViewModel = viewModel(
+                    factory = FlashcardStudyViewModel.Factory(
+                        appContainer.flashcardRepository,
+                        collectionId
+                    )
+                )
+                FlashcardStudyScreen(
+                    viewModel = vm,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
 
         // --- Quiz Flow ---
 
         composable(Screen.QuizList.route) {
-            val vm: QuizListViewModel = viewModel(
-                factory = QuizListViewModel.Factory(appContainer.quizRepository)
-            )
-            QuizListScreen(
-                viewModel = vm,
-                onTestClick = { testId ->
-                    navController.navigate(Screen.QuizDetail.createRoute(testId))
-                },
+            PermissionGuard(
+                permissionName = "quizzies.view",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                val vm: QuizListViewModel = viewModel(
+                    factory = QuizListViewModel.Factory(appContainer.quizRepository)
+                )
+                QuizListScreen(
+                    viewModel = vm,
+                    onTestClick = { testId ->
+                        navController.navigate(Screen.QuizDetail.createRoute(testId))
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(
             route = Screen.QuizDetail.route,
             arguments = listOf(navArgument("testId") { type = NavType.IntType })
         ) { backStackEntry ->
-            val testId = backStackEntry.arguments?.getInt("testId") ?: return@composable
-            val vm: QuizDetailViewModel = viewModel(
-                factory = QuizDetailViewModel.Factory(appContainer.quizRepository, testId)
-            )
-            QuizDetailScreen(
-                viewModel = vm,
-                onStartTest = { selectedTestId ->
-                    navController.navigate(Screen.QuizTaking.createRoute(selectedTestId))
-                },
+            PermissionGuard(
+                permissionName = "quizzies.view",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                val testId = backStackEntry.arguments?.getInt("testId") ?: return@PermissionGuard
+                val vm: QuizDetailViewModel = viewModel(
+                    factory = QuizDetailViewModel.Factory(appContainer.quizRepository, testId)
+                )
+                QuizDetailScreen(
+                    viewModel = vm,
+                    canStartAttempt = permissionViewModel.hasPermission("attempt.do"),
+                    canViewAttempt = permissionViewModel.hasPermission("attempt.view"),
+                    onStartTest = { selectedTestId ->
+                        navController.navigate(Screen.QuizTaking.createRoute(selectedTestId))
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(
@@ -219,29 +278,60 @@ fun AppNavGraph(
             arguments = listOf(navArgument("testId") { type = NavType.IntType })
         ) { backStackEntry ->
             val testId = backStackEntry.arguments?.getInt("testId") ?: return@composable
-            val vm: QuizTakingViewModel = viewModel(
-                factory = QuizTakingViewModel.Factory(appContainer.quizRepository, testId)
-            )
-            QuizTakingScreen(
-                viewModel = vm,
-                onQuizFinished = {
-                    // Navigate to result and remove QuizTaking from back stack
-                    val currentRoute = navController.currentDestination?.route
-                    navController.navigate(Screen.QuizResult.route) {
-                        if (currentRoute != null) {
-                            popUpTo(currentRoute) { inclusive = true }
-                        }
-                    }
-                },
+            PermissionGuard(
+                permissionName = "attempt.do",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                PermissionGuard(
+                    permissionName = "attempt.view",
+                    permissionState = permissionState,
+                    hasPermission = permissionViewModel::hasPermission,
+                    onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
+                    onBackClick = { navController.popBackStack() }
+                ) {
+                    val canAnswer = permissionViewModel.hasPermission("attempt.do")
+                    val canSubmit = permissionViewModel.hasPermission("attempt.do")
+                    val vm: QuizTakingViewModel = viewModel(
+                        factory = QuizTakingViewModel.Factory(
+                            appContainer.quizRepository,
+                            testId,
+                            canAnswer,
+                            canSubmit
+                        )
+                    )
+                    QuizTakingScreen(
+                        viewModel = vm,
+                        canAnswer = canAnswer,
+                        canSubmit = canSubmit,
+                        onQuizFinished = {
+                            val currentRoute = navController.currentDestination?.route
+                            navController.navigate(Screen.QuizResult.route) {
+                                if (currentRoute != null) {
+                                    popUpTo(currentRoute) { inclusive = true }
+                                }
+                            }
+                        },
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
+            }
         }
 
         composable(Screen.QuizResult.route) {
-            val vm: ResultViewModel = viewModel(
-                factory = ResultViewModel.Factory(appContainer.questionRepository)
-            )
-            ResultScreen(
+            PermissionGuard(
+                permissionName = "attempt.view",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
+                onBackClick = { navController.popBackStack() }
+            ) {
+                val vm: ResultViewModel = viewModel(
+                    factory = ResultViewModel.Factory(appContainer.questionRepository)
+                )
+                ResultScreen(
                 viewModel = vm,
                 onBackToQuizzes = {
                     // Pop back to QuizList (removes ResultScreen from stack)
@@ -255,54 +345,82 @@ fun AppNavGraph(
                         }
                     }
                 }
-            )
+                )
+            }
         }
 
         composable(Screen.AttemptHistory.route) {
-            val vm: AttemptHistoryViewModel = viewModel(
-                factory = AttemptHistoryViewModel.Factory(appContainer.quizRepository)
-            )
-            AttemptHistoryScreen(
-                viewModel = vm,
-                onAttemptClick = { attemptId ->
-                    navController.navigate(Screen.AttemptHistoryDetail.createRoute(attemptId))
-                },
+            PermissionGuard(
+                permissionName = "attempt.history",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                val vm: AttemptHistoryViewModel = viewModel(
+                    factory = AttemptHistoryViewModel.Factory(appContainer.quizRepository)
+                )
+                AttemptHistoryScreen(
+                    viewModel = vm,
+                    onAttemptClick = { attemptId ->
+                        navController.navigate(Screen.AttemptHistoryDetail.createRoute(attemptId))
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(
             route = Screen.AttemptHistoryDetail.route,
             arguments = listOf(navArgument("attemptId") { type = NavType.IntType })
         ) { backStackEntry ->
-            val attemptId = backStackEntry.arguments?.getInt("attemptId") ?: return@composable
-            val vm: AttemptDetailViewModel = viewModel(
-                factory = AttemptDetailViewModel.Factory(
-                    appContainer.quizRepository,
-                    appContainer.questionRepository,
-                    attemptId
-                )
-            )
-            AttemptDetailScreen(
-                viewModel = vm,
-                onContinueTest = { testId ->
-                    navController.navigate(Screen.QuizTaking.createRoute(testId)) {
-                        popUpTo(Screen.AttemptHistory.route)
-                    }
-                },
+            PermissionGuard(
+                permissionName = "attempt.view",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                val attemptId = backStackEntry.arguments?.getInt("attemptId") ?: return@PermissionGuard
+                val vm: AttemptDetailViewModel = viewModel(
+                    factory = AttemptDetailViewModel.Factory(
+                        appContainer.quizRepository,
+                        appContainer.questionRepository,
+                        attemptId
+                    )
+                )
+                AttemptDetailScreen(
+                    viewModel = vm,
+                    canContinueAttempt = permissionViewModel.hasPermission("attempt.do"),
+                    onContinueTest = { testId ->
+                        navController.navigate(Screen.QuizTaking.createRoute(testId)) {
+                            popUpTo(Screen.AttemptHistory.route)
+                        }
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
 
         // --- Profile Flow ---
 
-        composable(Screen.Profile.route) {
+        composable(Screen.Profile.route) { backStackEntry ->
             val vm: ProfileViewModel = viewModel(
                 factory = ProfileViewModel.Factory(
                     appContainer.profileRepository,
                     appContainer.authRepository
                 )
             )
+            val profileChanged by backStackEntry.savedStateHandle
+                .getStateFlow("profile_changed", false)
+                .collectAsState()
+            LaunchedEffect(profileChanged) {
+                if (profileChanged) {
+                    vm.loadProfile()
+                    permissionViewModel.loadPermissions(forceRefresh = true)
+                    backStackEntry.savedStateHandle["profile_changed"] = false
+                }
+            }
             ProfileScreen(
                 viewModel = vm,
                 onEditClick = {
@@ -340,14 +458,16 @@ fun AppNavGraph(
                     phone = user.phone ?: "",
                     birthday = formatBirthdayForEdit(user.birthday),
                     address = user.address ?: "",
-                    email = user.email
+                    email = user.email,
+                    avatarPath = user.avatar
                 )
             }
 
             EditProfileScreen(
                 viewModel = vm,
                 onSaveSuccess = {
-                    // Go back to ProfileScreen (it will refresh)
+                    navController.previousBackStackEntry?.savedStateHandle
+                        ?.set("profile_changed", true)
                     navController.popBackStack()
                 },
                 onCancelClick = {
@@ -388,10 +508,339 @@ fun AppNavGraph(
             )
         }
 
-        composable(Screen.AdminUserManagement.route) {
-            UserManagementScreen(
+        composable(Screen.AdminUserManagement.route) { backStackEntry ->
+            PermissionGuard(
+                permissionName = "user.view",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                val vm: UserManagementViewModel = viewModel(
+                    factory = UserManagementViewModel.Factory(appContainer.userRepository)
+                )
+                val userChanged by backStackEntry.savedStateHandle
+                    .getStateFlow("user_changed", false)
+                    .collectAsState()
+                LaunchedEffect(userChanged) {
+                    if (userChanged) {
+                        vm.refresh()
+                        backStackEntry.savedStateHandle["user_changed"] = false
+                    }
+                }
+                UserManagementScreen(
+                    viewModel = vm,
+                    canCreate = permissionViewModel.hasPermission("user.create"),
+                    canUpdate = permissionViewModel.hasPermission("user.update"),
+                    canDelete = permissionViewModel.hasPermission("user.delete"),
+                    onUserClick = { id -> navController.navigate(Screen.AdminUserDetail.createRoute(id)) },
+                    onCreateClick = { navController.navigate(Screen.AdminUserCreate.route) },
+                    onEditClick = { id -> navController.navigate(Screen.AdminUserEdit.createRoute(id)) },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+        }
+
+        composable(
+            route = Screen.AdminUserDetail.route,
+            arguments = listOf(navArgument("userId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            PermissionGuard(
+                permissionName = "user.view",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
+                onBackClick = { navController.popBackStack() }
+            ) {
+                val userId = backStackEntry.arguments?.getInt("userId") ?: return@PermissionGuard
+                val vm: UserDetailViewModel = viewModel(
+                    factory = UserDetailViewModel.Factory(appContainer.userRepository, userId)
+                )
+                val userDetailChanged by backStackEntry.savedStateHandle
+                    .getStateFlow("user_detail_changed", false)
+                    .collectAsState()
+                LaunchedEffect(userDetailChanged) {
+                    if (userDetailChanged) {
+                        vm.refresh()
+                        backStackEntry.savedStateHandle["user_detail_changed"] = false
+                    }
+                }
+                UserDetailScreen(
+                    viewModel = vm,
+                    canUpdate = permissionViewModel.hasPermission("user.update"),
+                    onEditClick = { id -> navController.navigate(Screen.AdminUserEdit.createRoute(id)) },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+        }
+
+        composable(Screen.AdminUserCreate.route) {
+            PermissionGuard(
+                permissionName = "user.create",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
+                onBackClick = { navController.popBackStack() }
+            ) {
+                val vm: UserFormViewModel = viewModel(
+                    factory = UserFormViewModel.Factory(
+                        appContainer.userRepository,
+                        appContainer.roleRepository,
+                        null
+                    )
+                )
+                UserFormScreen(
+                    viewModel = vm,
+                    isEditMode = false,
+                    onSaveSuccess = {
+                        navController.previousBackStackEntry?.savedStateHandle?.set("user_changed", true)
+                        navController.popBackStack()
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+        }
+
+        composable(
+            route = Screen.AdminUserEdit.route,
+            arguments = listOf(navArgument("userId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            PermissionGuard(
+                permissionName = "user.update",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
+                onBackClick = { navController.popBackStack() }
+            ) {
+                val userId = backStackEntry.arguments?.getInt("userId") ?: return@PermissionGuard
+                val vm: UserFormViewModel = viewModel(
+                    factory = UserFormViewModel.Factory(
+                        appContainer.userRepository,
+                        appContainer.roleRepository,
+                        userId
+                    )
+                )
+                UserFormScreen(
+                    viewModel = vm,
+                    isEditMode = true,
+                    onSaveSuccess = {
+                        runCatching {
+                            navController.getBackStackEntry(Screen.AdminUserManagement.route)
+                                .savedStateHandle["user_changed"] = true
+                        }
+                        navController.previousBackStackEntry?.savedStateHandle
+                            ?.set("user_detail_changed", true)
+                        navController.popBackStack()
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+        }
+
+        composable(Screen.AdminPermissionList.route) { backStackEntry ->
+            PermissionGuard(
+                permissionName = "permission.view",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
+                onBackClick = { navController.popBackStack() }
+            ) {
+                val vm: PermissionManagementViewModel = viewModel(
+                    factory = PermissionManagementViewModel.Factory(appContainer.permissionRepository)
+                )
+                val permissionChanged by backStackEntry.savedStateHandle
+                    .getStateFlow("permission_changed", false)
+                    .collectAsState()
+                LaunchedEffect(permissionChanged) {
+                    if (permissionChanged) {
+                        vm.refresh()
+                        permissionViewModel.loadPermissions(forceRefresh = true)
+                        backStackEntry.savedStateHandle["permission_changed"] = false
+                    }
+                }
+                PermissionManagementScreen(
+                    viewModel = vm,
+                    canCreate = permissionViewModel.hasPermission("permission.create"),
+                    canUpdate = permissionViewModel.hasPermission("permission.update"),
+                    canDelete = permissionViewModel.hasPermission("permission.delete"),
+                    onCreateClick = { navController.navigate(Screen.AdminPermissionCreate.route) },
+                    onEditClick = { id ->
+                        navController.navigate(Screen.AdminPermissionEdit.createRoute(id))
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+        }
+
+        composable(Screen.AdminPermissionCreate.route) {
+            PermissionGuard(
+                permissionName = "permission.create",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
+                onBackClick = { navController.popBackStack() }
+            ) {
+                val vm: PermissionFormViewModel = viewModel(
+                    factory = PermissionFormViewModel.Factory(
+                        repository = appContainer.permissionRepository,
+                        permissionId = null,
+                        initialPermission = null
+                    )
+                )
+                PermissionFormScreen(
+                    viewModel = vm,
+                    isEditMode = false,
+                    onSaveSuccess = {
+                        navController.previousBackStackEntry?.savedStateHandle
+                            ?.set("permission_changed", true)
+                        navController.popBackStack()
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+        }
+
+        composable(
+            route = Screen.AdminPermissionEdit.route,
+            arguments = listOf(navArgument("permissionId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            PermissionGuard(
+                permissionName = "permission.update",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
+                onBackClick = { navController.popBackStack() }
+            ) {
+                val permissionId = backStackEntry.arguments?.getInt("permissionId")
+                    ?: return@PermissionGuard
+                val listEntry = navController.previousBackStackEntry
+                val initialPermission = listEntry?.let { entry ->
+                    runCatching {
+                        ViewModelProvider(
+                            entry,
+                            PermissionManagementViewModel.Factory(appContainer.permissionRepository)
+                        )[PermissionManagementViewModel::class.java].findPermission(permissionId)
+                    }.getOrNull()
+                }
+                val vm: PermissionFormViewModel = viewModel(
+                    factory = PermissionFormViewModel.Factory(
+                        repository = appContainer.permissionRepository,
+                        permissionId = permissionId,
+                        initialPermission = initialPermission
+                    )
+                )
+                PermissionFormScreen(
+                    viewModel = vm,
+                    isEditMode = true,
+                    onSaveSuccess = {
+                        navController.previousBackStackEntry?.savedStateHandle
+                            ?.set("permission_changed", true)
+                        navController.popBackStack()
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+        }
+
+        composable(Screen.AdminRoleList.route) { backStackEntry ->
+            PermissionGuard(
+                permissionName = "role.view",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
+                onBackClick = { navController.popBackStack() }
+            ) {
+                val vm: RoleManagementViewModel = viewModel(
+                    factory = RoleManagementViewModel.Factory(appContainer.roleRepository)
+                )
+                val roleChanged by backStackEntry.savedStateHandle
+                    .getStateFlow("role_changed", false)
+                    .collectAsState()
+                LaunchedEffect(roleChanged) {
+                    if (roleChanged) {
+                        vm.refresh()
+                        backStackEntry.savedStateHandle["role_changed"] = false
+                    }
+                }
+                RoleManagementScreen(
+                    viewModel = vm,
+                    canCreate = permissionViewModel.hasPermission("role.create"),
+                    canUpdate = permissionViewModel.hasPermission("role.update"),
+                    canDelete = permissionViewModel.hasPermission("role.delete"),
+                    onCreateClick = { navController.navigate(Screen.AdminRoleCreate.route) },
+                    onEditClick = { id -> navController.navigate(Screen.AdminRoleEdit.createRoute(id)) },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+        }
+
+        composable(Screen.AdminRoleCreate.route) {
+            PermissionGuard(
+                permissionName = "role.create",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
+                onBackClick = { navController.popBackStack() }
+            ) {
+                val vm: RoleFormViewModel = viewModel(
+                    factory = RoleFormViewModel.Factory(
+                        roleRepository = appContainer.roleRepository,
+                        permissionRepository = appContainer.permissionRepository,
+                        roleId = null,
+                        initialRole = null
+                    )
+                )
+                RoleFormScreen(
+                    viewModel = vm,
+                    isEditMode = false,
+                    onSaveSuccess = {
+                        navController.previousBackStackEntry?.savedStateHandle?.set("role_changed", true)
+                        navController.popBackStack()
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+        }
+
+        composable(
+            route = Screen.AdminRoleEdit.route,
+            arguments = listOf(navArgument("roleId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            PermissionGuard(
+                permissionName = "role.update",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
+                onBackClick = { navController.popBackStack() }
+            ) {
+                val roleId = backStackEntry.arguments?.getInt("roleId") ?: return@PermissionGuard
+                val listEntry = navController.previousBackStackEntry
+                val initialRole = listEntry?.let { entry ->
+                    runCatching {
+                        ViewModelProvider(
+                            entry,
+                            RoleManagementViewModel.Factory(appContainer.roleRepository)
+                        )[RoleManagementViewModel::class.java].findRole(roleId)
+                    }.getOrNull()
+                }
+                val vm: RoleFormViewModel = viewModel(
+                    factory = RoleFormViewModel.Factory(
+                        roleRepository = appContainer.roleRepository,
+                        permissionRepository = appContainer.permissionRepository,
+                        roleId = roleId,
+                        initialRole = initialRole
+                    )
+                )
+                RoleFormScreen(
+                    viewModel = vm,
+                    isEditMode = true,
+                    onSaveSuccess = {
+                        navController.previousBackStackEntry?.savedStateHandle?.set("role_changed", true)
+                        navController.popBackStack()
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(Screen.AdminCollectionList.route) {
@@ -432,7 +881,11 @@ fun AppNavGraph(
                 onDeleteSuccess = {
                     navController.popBackStack()
                 },
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                canViewFlashcards = permissionViewModel.hasPermission("flashcard.view"),
+                canCreateFlashcards = permissionViewModel.hasPermission("flashcard.create"),
+                canUpdateFlashcards = permissionViewModel.hasPermission("flashcard.update"),
+                canDeleteFlashcards = permissionViewModel.hasPermission("flashcard.delete")
             )
         }
 
@@ -452,43 +905,62 @@ fun AppNavGraph(
         }
 
         composable(Screen.AdminFlashcardList.route) { backStackEntry ->
-            val vm: FlashcardManagementViewModel = viewModel(
-                factory = FlashcardManagementViewModel.Factory(appContainer.flashcardRepository)
-            )
-            val flashcardChanged by backStackEntry.savedStateHandle
-                .getStateFlow("flashcard_changed", false)
-                .collectAsState()
-            LaunchedEffect(flashcardChanged) {
-                if (flashcardChanged) {
-                    vm.refresh()
-                    backStackEntry.savedStateHandle["flashcard_changed"] = false
-                }
-            }
-            FlashcardManagementScreen(
-                viewModel = vm,
-                onCreateClick = {
-                    navController.navigate(Screen.AdminStandaloneFlashcardCreate.route)
-                },
-                onEditClick = { flashcardId ->
-                    navController.navigate(Screen.AdminStandaloneFlashcardEdit.createRoute(flashcardId))
-                },
+            PermissionGuard(
+                permissionName = "flashcard.view",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                val vm: FlashcardManagementViewModel = viewModel(
+                    factory = FlashcardManagementViewModel.Factory(appContainer.flashcardRepository)
+                )
+                val flashcardChanged by backStackEntry.savedStateHandle
+                    .getStateFlow("flashcard_changed", false)
+                    .collectAsState()
+                LaunchedEffect(flashcardChanged) {
+                    if (flashcardChanged) {
+                        vm.refresh()
+                        backStackEntry.savedStateHandle["flashcard_changed"] = false
+                    }
+                }
+                FlashcardManagementScreen(
+                    viewModel = vm,
+                    onCreateClick = {
+                        navController.navigate(Screen.AdminStandaloneFlashcardCreate.route)
+                    },
+                    onEditClick = { flashcardId ->
+                        navController.navigate(Screen.AdminStandaloneFlashcardEdit.createRoute(flashcardId))
+                    },
+                    onBackClick = { navController.popBackStack() },
+                    canCreate = permissionViewModel.hasPermission("flashcard.create"),
+                    canUpdate = permissionViewModel.hasPermission("flashcard.update"),
+                    canDelete = permissionViewModel.hasPermission("flashcard.delete")
+                )
+            }
         }
 
         composable(Screen.AdminStandaloneFlashcardCreate.route) {
-            val vm: FlashcardFormViewModel = viewModel(
-                factory = FlashcardFormViewModel.Factory(appContainer.flashcardRepository, null, null)
-            )
-            FlashcardFormScreen(
-                viewModel = vm,
-                isEditMode = false,
-                onSaveSuccess = {
-                    navController.previousBackStackEntry?.savedStateHandle?.set("flashcard_changed", true)
-                    navController.popBackStack()
-                },
+            PermissionGuard(
+                permissionName = "flashcard.create",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                val vm: FlashcardFormViewModel = viewModel(
+                    factory = FlashcardFormViewModel.Factory(appContainer.flashcardRepository, null, null)
+                )
+                FlashcardFormScreen(
+                    viewModel = vm,
+                    isEditMode = false,
+                    onSaveSuccess = {
+                        navController.previousBackStackEntry?.savedStateHandle?.set("flashcard_changed", true)
+                        navController.popBackStack()
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(Screen.AdminQuestionList.route) { backStackEntry ->
@@ -615,19 +1087,27 @@ fun AppNavGraph(
             route = Screen.AdminStandaloneFlashcardEdit.route,
             arguments = listOf(navArgument("flashcardId") { type = NavType.IntType })
         ) { backStackEntry ->
-            val flashcardId = backStackEntry.arguments?.getInt("flashcardId") ?: return@composable
-            val vm: FlashcardFormViewModel = viewModel(
-                factory = FlashcardFormViewModel.Factory(appContainer.flashcardRepository, null, flashcardId)
-            )
-            FlashcardFormScreen(
-                viewModel = vm,
-                isEditMode = true,
-                onSaveSuccess = {
-                    navController.previousBackStackEntry?.savedStateHandle?.set("flashcard_changed", true)
-                    navController.popBackStack()
-                },
+            PermissionGuard(
+                permissionName = "flashcard.update",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                val flashcardId = backStackEntry.arguments?.getInt("flashcardId") ?: return@PermissionGuard
+                val vm: FlashcardFormViewModel = viewModel(
+                    factory = FlashcardFormViewModel.Factory(appContainer.flashcardRepository, null, flashcardId)
+                )
+                FlashcardFormScreen(
+                    viewModel = vm,
+                    isEditMode = true,
+                    onSaveSuccess = {
+                        navController.previousBackStackEntry?.savedStateHandle?.set("flashcard_changed", true)
+                        navController.popBackStack()
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(
@@ -653,18 +1133,24 @@ fun AppNavGraph(
             route = Screen.AdminFlashcardCreate.route,
             arguments = listOf(navArgument("collectionId") { type = NavType.IntType })
         ) { backStackEntry ->
-            val collectionId = backStackEntry.arguments?.getInt("collectionId") ?: 0
-            val vm: FlashcardFormViewModel = viewModel(
-                factory = FlashcardFormViewModel.Factory(appContainer.flashcardRepository, collectionId, null)
-            )
-            FlashcardFormScreen(
-                viewModel = vm,
-                isEditMode = false,
-                onSaveSuccess = {
-                    navController.popBackStack()
-                },
+            PermissionGuard(
+                permissionName = "flashcard.create",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                val collectionId = backStackEntry.arguments?.getInt("collectionId") ?: return@PermissionGuard
+                val vm: FlashcardFormViewModel = viewModel(
+                    factory = FlashcardFormViewModel.Factory(appContainer.flashcardRepository, collectionId, null)
+                )
+                FlashcardFormScreen(
+                    viewModel = vm,
+                    isEditMode = false,
+                    onSaveSuccess = { navController.popBackStack() },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(
@@ -674,19 +1160,25 @@ fun AppNavGraph(
                 navArgument("flashcardId") { type = NavType.IntType }
             )
         ) { backStackEntry ->
-            val collectionId = backStackEntry.arguments?.getInt("collectionId") ?: 0
-            val flashcardId = backStackEntry.arguments?.getInt("flashcardId") ?: 0
-            val vm: FlashcardFormViewModel = viewModel(
-                factory = FlashcardFormViewModel.Factory(appContainer.flashcardRepository, collectionId, flashcardId)
-            )
-            FlashcardFormScreen(
-                viewModel = vm,
-                isEditMode = true,
-                onSaveSuccess = {
-                    navController.popBackStack()
-                },
+            PermissionGuard(
+                permissionName = "flashcard.update",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                val collectionId = backStackEntry.arguments?.getInt("collectionId") ?: return@PermissionGuard
+                val flashcardId = backStackEntry.arguments?.getInt("flashcardId") ?: return@PermissionGuard
+                val vm: FlashcardFormViewModel = viewModel(
+                    factory = FlashcardFormViewModel.Factory(appContainer.flashcardRepository, collectionId, flashcardId)
+                )
+                FlashcardFormScreen(
+                    viewModel = vm,
+                    isEditMode = true,
+                    onSaveSuccess = { navController.popBackStack() },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

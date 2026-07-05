@@ -42,6 +42,8 @@ import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
 @Composable
 fun QuizTakingScreen(
     viewModel: QuizTakingViewModel,
+    canAnswer: Boolean,
+    canSubmit: Boolean,
     onQuizFinished: () -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -112,6 +114,8 @@ fun QuizTakingScreen(
                             isSubmitting = uiState.isSubmitting,
                             remainingSeconds = uiState.remainingSeconds,
                             hasCurrentAnswer = uiState.hasCurrentAnswer,
+                            canAnswer = canAnswer,
+                            canSubmit = canSubmit,
                             onAnswerChanged = viewModel::updateAnswer,
                             onPrevious = viewModel::previousQuestion,
                             onNext = viewModel::saveAnswerAndContinue
@@ -163,11 +167,13 @@ private fun QuizQuestionCard(
     isSubmitting: Boolean,
     remainingSeconds: Int,
     hasCurrentAnswer: Boolean,
+    canAnswer: Boolean,
+    canSubmit: Boolean,
     onAnswerChanged: (String) -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit
 ) {
-    val inputEnabled = !isSavingAnswer && !isSubmitting
+    val inputEnabled = canAnswer && !isSavingAnswer && !isSubmitting
     Card(
         modifier = Modifier.fillMaxSize(),
         shape = RoundedCornerShape(24.dp),
@@ -218,7 +224,8 @@ private fun QuizQuestionCard(
                 ) { Text("‹  Previous") }
                 Button(
                     onClick = onNext,
-                    enabled = hasCurrentAnswer && inputEnabled && remainingSeconds > 0,
+                    enabled = hasCurrentAnswer && inputEnabled && remainingSeconds > 0 &&
+                        (!isLastQuestion || canSubmit),
                     modifier = Modifier.weight(1f).height(52.dp)
                 ) {
                     Text(

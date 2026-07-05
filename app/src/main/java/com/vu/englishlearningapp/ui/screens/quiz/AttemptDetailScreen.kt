@@ -48,6 +48,7 @@ private val AttemptDetailSecondary = Color(0xFF697386)
 @Composable
 fun AttemptDetailScreen(
     viewModel: AttemptDetailViewModel,
+    canContinueAttempt: Boolean,
     onContinueTest: (Int) -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -90,6 +91,7 @@ fun AttemptDetailScreen(
                 detail = uiState.detail!!,
                 uiState = uiState,
                 innerPadding = innerPadding,
+                canContinueAttempt = canContinueAttempt,
                 onContinueTest = onContinueTest,
                 onQuestionClick = viewModel::loadQuestionDetail
             )
@@ -102,6 +104,7 @@ private fun AttemptDetailContent(
     detail: AttemptDetailDto,
     uiState: AttemptDetailUiState,
     innerPadding: PaddingValues,
+    canContinueAttempt: Boolean,
     onContinueTest: (Int) -> Unit,
     onQuestionClick: (Int) -> Unit
 ) {
@@ -192,7 +195,7 @@ private fun AttemptDetailContent(
                     AttemptInfoRow("Started", formatAttemptDate(attempt.startedTime))
                     AttemptInfoRow("Submitted", formatAttemptDate(attempt.finishedTime))
                     AttemptInfoRow("Time used", attempt.totalTime ?: "In progress")
-                    if (!isSubmitted) {
+                    if (!isSubmitted && canContinueAttempt) {
                         AttemptInfoRow("Time remaining", formatRemainingTime(detail.remainingSeconds))
                     }
                 }

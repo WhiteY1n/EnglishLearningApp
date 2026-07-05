@@ -35,6 +35,23 @@ sealed class Screen(val route: String) {
     // Admin Collection Management flow
     data object AdminDashboard : Screen("admin_dashboard")
     data object AdminUserManagement : Screen("admin_user_management")
+    data object AdminUserDetail : Screen("admin_users/{userId}") {
+        fun createRoute(userId: Int) = "admin_users/$userId"
+    }
+    data object AdminUserCreate : Screen("admin_users/create")
+    data object AdminUserEdit : Screen("admin_users/edit/{userId}") {
+        fun createRoute(userId: Int) = "admin_users/edit/$userId"
+    }
+    data object AdminPermissionList : Screen("admin_permission_list")
+    data object AdminPermissionCreate : Screen("admin_permissions/create")
+    data object AdminPermissionEdit : Screen("admin_permissions/edit/{permissionId}") {
+        fun createRoute(permissionId: Int) = "admin_permissions/edit/$permissionId"
+    }
+    data object AdminRoleList : Screen("admin_role_list")
+    data object AdminRoleCreate : Screen("admin_roles/create")
+    data object AdminRoleEdit : Screen("admin_roles/edit/{roleId}") {
+        fun createRoute(roleId: Int) = "admin_roles/edit/$roleId"
+    }
     data object AdminCollectionList : Screen("admin_collection_list")
     data object AdminCollectionDetail : Screen("admin_collection_detail/{id}") {
         fun createRoute(id: Int) = "admin_collection_detail/$id"

@@ -31,8 +31,8 @@ import com.vu.englishlearningapp.data.remote.dto.flashcard.FlashcardDto
 @Composable
 fun FlashcardCard(
     flashcard: FlashcardDto,
-    onEditClick: () -> Unit,
-    onDeleteClick: () -> Unit,
+    onEditClick: (() -> Unit)? = null,
+    onDeleteClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -84,19 +84,23 @@ fun FlashcardCard(
             )
 
             Row {
-                IconButton(onClick = onEditClick) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit Flashcard",
-                        tint = Color(0xFF697386)
-                    )
+                onEditClick?.let { editClick ->
+                    IconButton(onClick = editClick) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit Flashcard",
+                            tint = Color(0xFF697386)
+                        )
+                    }
                 }
-                IconButton(onClick = onDeleteClick) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete Flashcard",
-                        tint = Color(0xFF697386)
-                    )
+                onDeleteClick?.let { deleteClick ->
+                    IconButton(onClick = deleteClick) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete Flashcard",
+                            tint = Color(0xFF697386)
+                        )
+                    }
                 }
             }
         }

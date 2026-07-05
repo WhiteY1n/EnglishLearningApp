@@ -101,7 +101,7 @@ class TestManagementViewModel(private val repository: QuizRepository) : ViewMode
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = exception.message ?: "Failed to load tests"
+                    errorMessage = exception.toBackendMessage()
                 )
             }
         }

@@ -21,6 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vu.englishlearningapp.core.permission.PermissionViewModel
+import com.vu.englishlearningapp.core.permission.PermissionHelper
 import com.vu.englishlearningapp.ui.navigation.AppBottomNavigation
 import com.vu.englishlearningapp.ui.navigation.AppNavGraph
 import com.vu.englishlearningapp.ui.navigation.Screen
@@ -51,6 +54,10 @@ class MainActivity : ComponentActivity() {
 
                 if (startDestination != null) {
                     val navController = rememberNavController()
+                    val permissionViewModel: PermissionViewModel = viewModel(
+                        factory = PermissionViewModel.Factory(appContainer.authRepository)
+                    )
+                    val permissionState by permissionViewModel.uiState.collectAsState()
                     val backStackEntry by navController.currentBackStackEntryAsState()
                     val currentRoute = backStackEntry?.destination?.route
                     val accessToken by appContainer.tokenManager.accessTokenFlow.collectAsState(
@@ -74,7 +81,11 @@ class MainActivity : ComponentActivity() {
                             if (showBottomNavigation) {
                                 AppBottomNavigation(
                                     navController = navController,
-                                    currentRoute = currentRoute
+                                    currentRoute = currentRoute,
+                                    hasPermission = { permissionName ->
+                                        PermissionHelper(permissionState.user)
+                                            .checkPermission(permissionName)
+                                    }
                                 )
                             }
                         }
@@ -83,6 +94,7 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             appContainer = appContainer,
                             startDestination = startDestination!!,
+                            permissionViewModel = permissionViewModel,
                             modifier = Modifier.padding(innerPadding)
                         )
                     }

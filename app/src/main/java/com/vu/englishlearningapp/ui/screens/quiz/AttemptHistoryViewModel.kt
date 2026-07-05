@@ -3,6 +3,7 @@ package com.vu.englishlearningapp.ui.screens.quiz
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import com.vu.englishlearningapp.data.remote.dto.quiz.AttemptHistoryDto
 import com.vu.englishlearningapp.data.repository.QuizRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,7 +68,7 @@ class AttemptHistoryViewModel(
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = exception.message ?: "Failed to load attempt history"
+                    errorMessage = exception.toBackendMessage()
                 )
             }
         }

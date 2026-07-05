@@ -80,6 +80,9 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
+    // Image loading
+    implementation(libs.coil.compose)
+
     // Material Icons Extended (for icons like Visibility, Email, etc.)
     implementation(libs.androidx.compose.material.icons.extended)
 

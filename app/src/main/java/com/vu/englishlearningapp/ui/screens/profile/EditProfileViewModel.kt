@@ -3,6 +3,7 @@ package com.vu.englishlearningapp.ui.screens.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import com.vu.englishlearningapp.data.repository.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +19,11 @@ data class EditProfileUiState(
     val birthday: String = "",
     val address: String = "",
     val email: String = "",           // Read-only, displayed but not editable
+    val avatarPath: String? = null,
+    val avatarPreviewUri: String? = null,
+    val avatarBytes: ByteArray? = null,
+    val avatarFileName: String? = null,
+    val avatarMimeType: String? = null,
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val errorMessage: String? = null,
@@ -49,7 +55,8 @@ class EditProfileViewModel(
         phone: String,
         birthday: String,
         address: String,
-        email: String
+        email: String,
+        avatarPath: String?
     ) {
         // Only initialize if the form is empty (avoid overwriting user edits)
         if (_uiState.value.email.isEmpty()) {
@@ -58,7 +65,8 @@ class EditProfileViewModel(
                 phone = phone,
                 birthday = birthday,
                 address = address,
-                email = email
+                email = email,
+                avatarPath = avatarPath
             )
         }
     }
@@ -79,6 +87,21 @@ class EditProfileViewModel(
 
     fun onAddressChange(address: String) {
         _uiState.value = _uiState.value.copy(address = address, addressError = null, errorMessage = null)
+    }
+
+    fun onAvatarSelected(
+        bytes: ByteArray,
+        fileName: String,
+        mimeType: String?,
+        previewUri: String
+    ) {
+        _uiState.value = _uiState.value.copy(
+            avatarBytes = bytes,
+            avatarFileName = fileName,
+            avatarMimeType = mimeType,
+            avatarPreviewUri = previewUri,
+            errorMessage = null
+        )
     }
 
     /**
@@ -129,7 +152,10 @@ class EditProfileViewModel(
                     name = current.name.trim(),
                     phone = current.phone.trim(),
                     birthday = current.birthday.trim(),
-                    address = current.address.trim()
+                    address = current.address.trim(),
+                    avatarBytes = current.avatarBytes,
+                    avatarFileName = current.avatarFileName,
+                    avatarMimeType = current.avatarMimeType
                 )
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,
@@ -138,7 +164,7 @@ class EditProfileViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,
-                    errorMessage = e.message ?: "Failed to save profile"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }

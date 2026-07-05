@@ -3,6 +3,9 @@ package com.vu.englishlearningapp.core.network
 import com.google.gson.JsonParser
 import com.vu.englishlearningapp.data.remote.dto.auth.ApiResponse
 import retrofit2.HttpException
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 data class BackendResult<T>(
     val data: T,
@@ -25,13 +28,25 @@ fun ApiResponse<*>.requireBackendSuccess(): BackendActionResult {
 
 fun Throwable.toBackendMessage(): String {
     if (this is BackendMessageException) return message.orEmpty()
+    if (this is SocketTimeoutException) {
+        return "The server took too long to respond. Please try again."
+    }
+    if (this is ConnectException || this is UnknownHostException) {
+        return "Unable to connect to the server. Check your connection and try again."
+    }
     if (this is HttpException) {
         val backendMessage = runCatching {
             val body = response()?.errorBody()?.string().orEmpty()
             JsonParser.parseString(body).asJsonObject.get("message")?.asString
         }.getOrNull()
         if (!backendMessage.isNullOrBlank()) return backendMessage
+        return if (code() >= 500) {
+            "The server is currently unavailable. Please try again later."
+        } else {
+            "The request could not be completed. Please try again."
+        }
     }
+    cause?.takeIf { it !== this }?.let { return it.toBackendMessage() }
     return localizedMessage ?: message ?: javaClass.simpleName
 }
 

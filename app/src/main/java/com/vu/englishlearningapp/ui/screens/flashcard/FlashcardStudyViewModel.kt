@@ -3,6 +3,7 @@ package com.vu.englishlearningapp.ui.screens.flashcard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import com.vu.englishlearningapp.data.remote.dto.flashcard.FlashcardDto
 import com.vu.englishlearningapp.data.repository.FlashcardRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -73,7 +74,7 @@ class FlashcardStudyViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Failed to load flashcards"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }

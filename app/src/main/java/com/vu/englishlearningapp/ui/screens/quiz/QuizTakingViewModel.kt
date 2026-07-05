@@ -3,6 +3,7 @@ package com.vu.englishlearningapp.ui.screens.quiz
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import com.vu.englishlearningapp.data.remote.dto.quiz.AttemptDetailDto
 import com.vu.englishlearningapp.data.remote.dto.quiz.QuestionDto
 import com.vu.englishlearningapp.data.repository.QuizRepository
@@ -56,7 +57,9 @@ data class QuizTakingUiState(
 
 class QuizTakingViewModel(
     private val quizRepository: QuizRepository,
-    private val testId: Int
+    private val testId: Int,
+    private val canAnswer: Boolean,
+    private val canSubmit: Boolean
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QuizTakingUiState())
@@ -95,13 +98,14 @@ class QuizTakingViewModel(
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = exception.message ?: "Failed to start quiz"
+                    errorMessage = exception.toBackendMessage()
                 )
             }
         }
     }
 
     fun updateAnswer(answer: String) {
+        if (!canAnswer) return
         val current = _uiState.value
         val question = current.currentQuestion ?: return
         _uiState.value = current.copy(
@@ -111,6 +115,7 @@ class QuizTakingViewModel(
     }
 
     fun saveAnswerAndContinue() {
+        if (!canAnswer) return
         val current = _uiState.value
         val attemptId = current.attemptId ?: return
         val question = current.currentQuestion ?: return
@@ -136,7 +141,7 @@ class QuizTakingViewModel(
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isSavingAnswer = false,
-                    answerErrorMessage = exception.message ?: "Could not save answer"
+                    answerErrorMessage = exception.toBackendMessage()
                 )
             }
         }
@@ -178,6 +183,7 @@ class QuizTakingViewModel(
     }
 
     private fun submitAttempt() {
+        if (!canSubmit) return
         val current = _uiState.value
         val attemptId = current.attemptId ?: return
         if (current.isSubmitting || current.isFinished) return
@@ -207,7 +213,7 @@ class QuizTakingViewModel(
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isSubmitting = false,
-                    errorMessage = exception.message ?: "Failed to submit quiz"
+                    errorMessage = exception.toBackendMessage()
                 )
             }
         }
@@ -253,12 +259,19 @@ class QuizTakingViewModel(
 
     class Factory(
         private val quizRepository: QuizRepository,
-        private val testId: Int
+        private val testId: Int,
+        private val canAnswer: Boolean,
+        private val canSubmit: Boolean
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(QuizTakingViewModel::class.java)) {
-                return QuizTakingViewModel(quizRepository, testId) as T
+                return QuizTakingViewModel(
+                    quizRepository,
+                    testId,
+                    canAnswer,
+                    canSubmit
+                ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }

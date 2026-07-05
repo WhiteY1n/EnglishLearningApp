@@ -115,7 +115,7 @@ class QuestionManagementViewModel(
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = exception.message ?: "Failed to load questions"
+                    errorMessage = exception.toBackendMessage()
                 )
             }
         }

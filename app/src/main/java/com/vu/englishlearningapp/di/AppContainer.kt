@@ -9,12 +9,18 @@ import com.vu.englishlearningapp.data.remote.api.FlashcardApi
 import com.vu.englishlearningapp.data.remote.api.ProfileApi
 import com.vu.englishlearningapp.data.remote.api.QuizApi
 import com.vu.englishlearningapp.data.remote.api.QuestionApi
+import com.vu.englishlearningapp.data.remote.api.PermissionApi
+import com.vu.englishlearningapp.data.remote.api.RoleApi
+import com.vu.englishlearningapp.data.remote.api.UserApi
 import com.vu.englishlearningapp.data.repository.AuthRepository
 import com.vu.englishlearningapp.data.repository.CollectionRepository
 import com.vu.englishlearningapp.data.repository.FlashcardRepository
 import com.vu.englishlearningapp.data.repository.ProfileRepository
 import com.vu.englishlearningapp.data.repository.QuizRepository
 import com.vu.englishlearningapp.data.repository.QuestionRepository
+import com.vu.englishlearningapp.data.repository.PermissionRepository
+import com.vu.englishlearningapp.data.repository.RoleRepository
+import com.vu.englishlearningapp.data.repository.UserRepository
 
 /**
  * Manual dependency injection container.
@@ -38,6 +44,9 @@ class AppContainer(context: Context) {
     val questionApi: QuestionApi = retrofit.create(QuestionApi::class.java)
     val profileApi: ProfileApi = retrofit.create(ProfileApi::class.java)
     val collectionApi: CollectionApi = retrofit.create(CollectionApi::class.java)
+    val permissionApi: PermissionApi = retrofit.create(PermissionApi::class.java)
+    val roleApi: RoleApi = retrofit.create(RoleApi::class.java)
+    val userApi: UserApi = retrofit.create(UserApi::class.java)
 
     // --- Repositories ---
     val authRepository = AuthRepository(authApi, tokenManager)
@@ -46,4 +55,7 @@ class AppContainer(context: Context) {
     val questionRepository = QuestionRepository(questionApi)
     val profileRepository = ProfileRepository(authApi, profileApi)
     val collectionRepository = CollectionRepository(collectionApi)
+    val permissionRepository = PermissionRepository(permissionApi)
+    val roleRepository = RoleRepository(roleApi)
+    val userRepository = UserRepository(userApi)
 }

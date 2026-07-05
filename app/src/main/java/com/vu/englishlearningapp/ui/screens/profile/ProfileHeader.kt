@@ -29,6 +29,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import coil.compose.AsyncImage
+import com.vu.englishlearningapp.core.network.toAssetUrl
 import com.vu.englishlearningapp.ui.theme.AppScreenBackground
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -81,14 +85,15 @@ internal fun ProfileHeader(
                     color = Color(0xFFB9E3F1),
                     shadowElevation = 2.dp
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Profile avatar",
-                            modifier = Modifier.size(68.dp),
-                            tint = Color(0xFF35558C)
-                        )
-                    }
+                    AsyncImage(
+                        model = user.avatar.toAssetUrl(),
+                        contentDescription = "Profile avatar",
+                        contentScale = ContentScale.Crop,
+                        placeholder = rememberVectorPainter(Icons.Default.Person),
+                        error = rememberVectorPainter(Icons.Default.Person),
+                        fallback = rememberVectorPainter(Icons.Default.Person),
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
                 IconButton(
                     onClick = onEditClick,

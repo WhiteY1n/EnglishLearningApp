@@ -48,6 +48,8 @@ private val DetailSecondaryText = Color(0xFF697386)
 @Composable
 fun QuizDetailScreen(
     viewModel: QuizDetailViewModel,
+    canStartAttempt: Boolean,
+    canViewAttempt: Boolean,
     onStartTest: (Int) -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -195,7 +197,8 @@ fun QuizDetailScreen(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
                             )
                         }
-                        Button(
+                        val canOpenAttempt = canStartAttempt && canViewAttempt
+                        if (canOpenAttempt) Button(
                             onClick = { onStartTest(test.id) },
                             modifier = Modifier
                                 .fillMaxWidth()

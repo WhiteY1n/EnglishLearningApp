@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vu.englishlearningapp.data.remote.dto.auth.UserDto
 import com.vu.englishlearningapp.data.repository.AuthRepository
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,20 +39,21 @@ class HomeViewModel(
     /**
      * Load the current user's profile from the API.
      */
-    private fun loadCurrentUser() {
+    fun loadCurrentUser() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
             try {
                 val user = authRepository.getCurrentUser()
                 _uiState.value = _uiState.value.copy(
                     user = user,
-                    isLoading = false
+                    isLoading = false,
+                    errorMessage = null
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Failed to load user data"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }
@@ -73,7 +75,7 @@ class HomeViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Logout failed"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }

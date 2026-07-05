@@ -49,7 +49,7 @@ class FlashcardFormViewModel(
                 _uiState.value = _uiState.value.copy(
                     isLoadingWordTypes = false,
                     isLoadingFlashcard = false,
-                    errorMessage = e.message ?: "Failed to load initial data"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }

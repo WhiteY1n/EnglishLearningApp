@@ -99,7 +99,6 @@ fun ProfileScreen(
                                     onEditClick = onEditClick
                                 )
                                 PersonalInformationCard(user = user)
-                                AccessInformationCard(user = user)
                                 LogoutCard(
                                     isLoading = uiState.isLoading,
                                     onLogoutClick = viewModel::logout

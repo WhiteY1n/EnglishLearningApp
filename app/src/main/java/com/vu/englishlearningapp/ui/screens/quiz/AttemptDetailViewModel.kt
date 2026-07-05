@@ -3,6 +3,7 @@ package com.vu.englishlearningapp.ui.screens.quiz
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import com.vu.englishlearningapp.data.remote.dto.question.AdminQuestionDto
 import com.vu.englishlearningapp.data.remote.dto.quiz.AttemptDetailDto
 import com.vu.englishlearningapp.data.repository.QuestionRepository
@@ -46,7 +47,7 @@ class AttemptDetailViewModel(
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = exception.message ?: "Failed to load attempt details"
+                    errorMessage = exception.toBackendMessage()
                 )
             }
         }
@@ -83,7 +84,7 @@ class AttemptDetailViewModel(
                     if (_uiState.value.expandedQuestionId == questionId) {
                         _uiState.value = _uiState.value.copy(
                             isQuestionLoading = false,
-                            questionError = e.message ?: "Failed to load question details"
+                            questionError = e.toBackendMessage()
                         )
                     }
                 }

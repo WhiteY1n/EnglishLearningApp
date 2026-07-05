@@ -3,6 +3,7 @@ package com.vu.englishlearningapp.ui.screens.admin.collection
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import com.vu.englishlearningapp.data.remote.dto.flashcard.FlashcardCollectionDetailDto
 import com.vu.englishlearningapp.data.repository.CollectionRepository
 import com.vu.englishlearningapp.data.repository.FlashcardRepository
@@ -44,7 +45,7 @@ class CollectionDetailViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Failed to load collection details"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }
@@ -62,7 +63,7 @@ class CollectionDetailViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isDeleting = false,
-                    errorMessage = e.message ?: "Failed to delete collection"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }
@@ -78,7 +79,7 @@ class CollectionDetailViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Failed to delete flashcard"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }

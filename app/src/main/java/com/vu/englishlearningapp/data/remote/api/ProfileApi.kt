@@ -28,8 +28,7 @@ interface ProfileApi {
         @Part("name") name: RequestBody,
         @Part("phone") phone: RequestBody,
         @Part("birthday") birthday: RequestBody,
-        @Part("address") address: RequestBody
-        // TODO: Add avatar field for future image upload
-        // @Part avatar: MultipartBody.Part? = null
+        @Part("address") address: RequestBody,
+        @Part avatar: MultipartBody.Part? = null
     ): ApiResponse<UserDto>
 }

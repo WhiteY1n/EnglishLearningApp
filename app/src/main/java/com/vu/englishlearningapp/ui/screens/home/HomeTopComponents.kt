@@ -119,11 +119,13 @@ internal fun HomeSearchField(
 
 @Composable
 internal fun HomeRecommendations(
+    showFlashcards: Boolean,
+    showQuizzes: Boolean,
     onFlashcardsClick: () -> Unit,
     onQuizzesClick: () -> Unit
 ) {
-    val recommendations = listOf(
-        Recommendation(
+    val recommendations = buildList {
+        if (showFlashcards) add(Recommendation(
             title = "Grow your vocabulary",
             subtitle = "Review flashcard collections",
             badge = "Flashcards",
@@ -131,8 +133,8 @@ internal fun HomeRecommendations(
             colors = listOf(Color(0xFFDDECF4), Color(0xFFCDE2ED)),
             backgroundRes = R.drawable.home_flashcard_vocabulary,
             onClick = onFlashcardsClick
-        ),
-        Recommendation(
+        ))
+        if (showQuizzes) add(Recommendation(
             title = "Test your knowledge",
             subtitle = "Take a quiz and track progress",
             badge = "Quizzes",
@@ -140,8 +142,8 @@ internal fun HomeRecommendations(
             colors = listOf(Color(0xFFE7E0F7), Color(0xFFD8CEF0)),
             backgroundRes = R.drawable.home_quiz_study,
             onClick = onQuizzesClick
-        )
-    )
+        ))
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(

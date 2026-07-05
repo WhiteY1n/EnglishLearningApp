@@ -3,6 +3,7 @@ package com.vu.englishlearningapp.ui.screens.admin.collection
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import com.vu.englishlearningapp.data.repository.CollectionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,7 +48,7 @@ class CreateEditCollectionViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Failed to load collection details"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }
@@ -90,7 +91,7 @@ class CreateEditCollectionViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,
-                    errorMessage = e.message ?: "Failed to save collection"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }

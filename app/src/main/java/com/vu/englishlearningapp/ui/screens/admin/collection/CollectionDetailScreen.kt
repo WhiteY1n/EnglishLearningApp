@@ -59,7 +59,11 @@ fun CollectionDetailScreen(
     onCreateFlashcardClick: (Int) -> Unit,
     onEditFlashcardClick: (collectionId: Int, flashcardId: Int) -> Unit,
     onDeleteSuccess: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    canViewFlashcards: Boolean,
+    canCreateFlashcards: Boolean,
+    canUpdateFlashcards: Boolean,
+    canDeleteFlashcards: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -137,7 +141,7 @@ fun CollectionDetailScreen(
             )
         },
         floatingActionButton = {
-            uiState.collection?.let { collection ->
+            if (canCreateFlashcards) uiState.collection?.let { collection ->
                 FloatingActionButton(
                     onClick = { onCreateFlashcardClick(collection.id) },
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -220,8 +224,7 @@ fun CollectionDetailScreen(
                         }
                     }
 
-                    // Flashcards List Section
-                    item {
+                    if (canViewFlashcards) item {
                         Text(
                             text = "Flashcards",
                             style = MaterialTheme.typography.titleMedium,
@@ -230,7 +233,7 @@ fun CollectionDetailScreen(
                         )
                     }
 
-                    if (collection.flashcards.isEmpty()) {
+                    if (canViewFlashcards && collection.flashcards.isEmpty()) {
                         item {
                             Box(
                                 modifier = Modifier.fillMaxWidth().padding(32.dp),
@@ -243,12 +246,16 @@ fun CollectionDetailScreen(
                                 )
                             }
                         }
-                    } else {
+                    } else if (canViewFlashcards) {
                         items(collection.flashcards) { flashcard ->
                             com.vu.englishlearningapp.ui.screens.admin.flashcard.FlashcardCard(
                                 flashcard = flashcard,
-                                onEditClick = { onEditFlashcardClick(collection.id, flashcard.id) },
-                                onDeleteClick = { flashcardIdToDelete = flashcard.id }
+                                onEditClick = if (canUpdateFlashcards) ({
+                                    onEditFlashcardClick(collection.id, flashcard.id)
+                                }) else null,
+                                onDeleteClick = if (canDeleteFlashcards) ({
+                                    flashcardIdToDelete = flashcard.id
+                                }) else null
                             )
                         }
                     }

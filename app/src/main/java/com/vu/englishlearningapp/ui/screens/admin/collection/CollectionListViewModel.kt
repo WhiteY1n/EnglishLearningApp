@@ -3,6 +3,7 @@ package com.vu.englishlearningapp.ui.screens.admin.collection
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import com.vu.englishlearningapp.data.remote.dto.flashcard.FlashcardCollectionDto
 import com.vu.englishlearningapp.data.repository.CollectionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,7 +44,7 @@ class CollectionListViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Failed to load collections"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }
@@ -61,7 +62,7 @@ class CollectionListViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isRefreshing = false,
-                    errorMessage = e.message ?: "Failed to refresh collections"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }

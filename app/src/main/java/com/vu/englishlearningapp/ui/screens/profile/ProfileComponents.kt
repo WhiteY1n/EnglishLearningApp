@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
@@ -30,8 +29,6 @@ import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.ToggleOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -98,31 +95,6 @@ internal fun PersonalInformationCard(user: UserDto) {
 }
 
 @Composable
-internal fun AccessInformationCard(user: UserDto) {
-    val permissions = user.permissions.joinToString(", ") { it.permissionName }
-    ProfileSectionCard {
-        ProfileMenuRow(
-            icon = Icons.Default.ToggleOn,
-            title = "Account status",
-            value = if (user.status == 1) "Active" else "Inactive",
-            valueColor = if (user.status == 1) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
-        )
-        ProfileDivider()
-        ProfileMenuRow(
-            icon = Icons.Default.AdminPanelSettings,
-            title = "Account type",
-            value = if (user.isSuperAdmin) "Super administrator" else "Administrator"
-        )
-        ProfileDivider()
-        ProfileMenuRow(
-            icon = Icons.Default.Security,
-            title = "Permissions",
-            value = permissions.ifBlank { "None" }
-        )
-    }
-}
-
-@Composable
 internal fun LogoutCard(
     isLoading: Boolean,
     onLogoutClick: () -> Unit
@@ -160,7 +132,7 @@ private fun ProfileMenuRow(
     icon: ImageVector,
     title: String,
     value: String? = null,
-    valueColor: Color = ProfileColors.Accent,
+    valueColor: Color = ProfileColors.PrimaryText,
     titleColor: Color = ProfileColors.PrimaryText,
     enabled: Boolean = true,
     showArrow: Boolean = false,

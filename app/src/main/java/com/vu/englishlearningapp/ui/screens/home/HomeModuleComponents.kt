@@ -61,11 +61,18 @@ internal object HomeColors {
 @Composable
 internal fun HomeCategorySelector(
     selectedCategory: HomeCategory,
+    showLearnCategory: Boolean,
+    showTestCategory: Boolean,
     showAdminCategory: Boolean,
     onCategorySelected: (HomeCategory) -> Unit
 ) {
-    val categories = HomeCategory.entries.filter {
-        showAdminCategory || it != HomeCategory.ADMIN
+    val categories = HomeCategory.entries.filter { category ->
+        when (category) {
+            HomeCategory.LEARN -> showLearnCategory
+            HomeCategory.TEST -> showTestCategory
+            HomeCategory.ADMIN -> showAdminCategory
+            else -> true
+        }
     }
     LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         items(categories, key = { it.name }) { category ->

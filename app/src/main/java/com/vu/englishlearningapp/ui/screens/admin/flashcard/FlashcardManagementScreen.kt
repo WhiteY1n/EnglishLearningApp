@@ -48,7 +48,10 @@ fun FlashcardManagementScreen(
     viewModel: FlashcardManagementViewModel,
     onCreateClick: () -> Unit,
     onEditClick: (Int) -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    canCreate: Boolean,
+    canUpdate: Boolean,
+    canDelete: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -77,8 +80,10 @@ fun FlashcardManagementScreen(
             )
         },
         floatingActionButton = {
+            if (canCreate) {
             FloatingActionButton(onClick = onCreateClick) {
                 Icon(Icons.Default.Add, contentDescription = "Create flashcard")
+            }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -146,8 +151,8 @@ fun FlashcardManagementScreen(
                     items(uiState.flashcards, key = { it.id }) { flashcard ->
                         FlashcardCard(
                             flashcard = flashcard,
-                            onEditClick = { onEditClick(flashcard.id) },
-                            onDeleteClick = { viewModel.requestDelete(flashcard) }
+                            onEditClick = if (canUpdate) ({ onEditClick(flashcard.id) }) else null,
+                            onDeleteClick = if (canDelete) ({ viewModel.requestDelete(flashcard) }) else null
                         )
                     }
 

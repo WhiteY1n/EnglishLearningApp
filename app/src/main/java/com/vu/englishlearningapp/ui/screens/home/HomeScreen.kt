@@ -2,6 +2,7 @@ package com.vu.englishlearningapp.ui.screens.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -53,17 +54,31 @@ fun HomeScreen(
     val permissionHelper = remember(uiState.user) {
         PermissionHelper(uiState.user)
     }
+    val canViewFlashcards = permissionHelper.checkPermission("flashcard.view")
+    val canViewQuizzes = permissionHelper.checkPermission("quizzies.view")
     val canAccessAdminDashboard = listOf(
         "flashcard_collection.view",
         "flashcard.view",
         "question.view",
         "collection_test.view",
         "user_test_attempt.view",
-        "user.view"
+        "user.view",
+        "permission.view",
+        "role.view"
     ).any(permissionHelper::checkPermission)
 
+    LaunchedEffect(canViewFlashcards, canViewQuizzes, canAccessAdminDashboard) {
+        val selectedCategoryAvailable = when (selectedCategory) {
+            HomeCategory.LEARN -> canViewFlashcards
+            HomeCategory.TEST -> canViewQuizzes
+            HomeCategory.ADMIN -> canAccessAdminDashboard
+            else -> true
+        }
+        if (!selectedCategoryAvailable) selectedCategory = HomeCategory.ALL
+    }
+
     val modules = buildList {
-        add(
+        if (canViewFlashcards) add(
             HomeModule(
                 title = "Flashcards",
                 description = "Build vocabulary with focused card collections",
@@ -72,7 +87,7 @@ fun HomeScreen(
                 onClick = onFlashcardsClick
             )
         )
-        add(
+        if (canViewQuizzes) add(
             HomeModule(
                 title = "Quizzes",
                 description = "Check your progress with interactive tests",
@@ -128,6 +143,28 @@ fun HomeScreen(
                 }
             }
 
+            uiState.errorMessage != null && uiState.user == null -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = uiState.errorMessage.orEmpty(),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(18.dp))
+                    androidx.compose.material3.Button(onClick = viewModel::loadCurrentUser) {
+                        Text("Try again")
+                    }
+                }
+            }
+
             else -> {
                 LazyColumn(
                     modifier = Modifier
@@ -160,8 +197,10 @@ fun HomeScreen(
                         item { HomeErrorMessage(message = errorMessage) }
                     }
 
-                    item {
+                    if (canViewFlashcards || canViewQuizzes) item {
                         HomeRecommendations(
+                            showFlashcards = canViewFlashcards,
+                            showQuizzes = canViewQuizzes,
                             onFlashcardsClick = onFlashcardsClick,
                             onQuizzesClick = onQuizzesClick
                         )
@@ -178,6 +217,8 @@ fun HomeScreen(
                     item {
                         HomeCategorySelector(
                             selectedCategory = selectedCategory,
+                            showLearnCategory = canViewFlashcards,
+                            showTestCategory = canViewQuizzes,
                             showAdminCategory = canAccessAdminDashboard,
                             onCategorySelected = { selectedCategory = it }
                         )

@@ -4,6 +4,7 @@ import com.vu.englishlearningapp.data.remote.api.AuthApi
 import com.vu.englishlearningapp.data.remote.api.ProfileApi
 import com.vu.englishlearningapp.data.remote.dto.auth.UserDto
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 
 /**
@@ -42,18 +43,29 @@ class ProfileRepository(
         name: String,
         phone: String,
         birthday: String,
-        address: String
+        address: String,
+        avatarBytes: ByteArray? = null,
+        avatarFileName: String? = null,
+        avatarMimeType: String? = null
     ): UserDto {
         // Helper to create text request bodies for multipart
         val textType = "text/plain".toMediaTypeOrNull()
+
+        val avatarPart = avatarBytes?.let { bytes ->
+            MultipartBody.Part.createFormData(
+                name = "avatar",
+                filename = avatarFileName ?: "avatar",
+                body = bytes.toRequestBody(avatarMimeType?.toMediaTypeOrNull())
+            )
+        }
 
         val response = profileApi.updateProfile(
             method = "PUT".toRequestBody(textType),
             name = name.toRequestBody(textType),
             phone = phone.toRequestBody(textType),
             birthday = birthday.toRequestBody(textType),
-            address = address.toRequestBody(textType)
-            // TODO: Add avatar MultipartBody.Part for image upload in the future
+            address = address.toRequestBody(textType),
+            avatar = avatarPart
         )
 
         if (response.statusCode != 200 || response.data == null) {

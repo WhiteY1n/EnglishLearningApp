@@ -7,6 +7,8 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.filled.ViewCarousel
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.vu.englishlearningapp.core.permission.PermissionHelper
@@ -60,6 +62,18 @@ class DashboardViewModel : ViewModel() {
             icon = Icons.Default.People,
             route = Screen.AdminUserManagement.route,
             requiredPermission = "user.view"
+        ),
+        AdminMenuItem(
+            title = "Permissions",
+            icon = Icons.Default.Security,
+            route = Screen.AdminPermissionList.route,
+            requiredPermission = "permission.view"
+        ),
+        AdminMenuItem(
+            title = "Roles",
+            icon = Icons.Default.ManageAccounts,
+            route = Screen.AdminRoleList.route,
+            requiredPermission = "role.view"
         )
     )
 

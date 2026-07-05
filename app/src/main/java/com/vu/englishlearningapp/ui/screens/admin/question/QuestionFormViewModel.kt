@@ -57,7 +57,7 @@ class QuestionFormViewModel(
             } catch (exception: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = exception.message ?: "Failed to load question form"
+                    errorMessage = exception.toBackendMessage()
                 )
             }
         }

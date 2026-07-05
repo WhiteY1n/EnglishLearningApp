@@ -3,6 +3,7 @@ package com.vu.englishlearningapp.ui.screens.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vu.englishlearningapp.core.network.toBackendMessage
 import com.vu.englishlearningapp.data.remote.dto.auth.UserDto
 import com.vu.englishlearningapp.data.repository.AuthRepository
 import com.vu.englishlearningapp.data.repository.ProfileRepository
@@ -54,7 +55,7 @@ class ProfileViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Failed to load profile"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }
@@ -77,7 +78,7 @@ class ProfileViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isRefreshing = false,
-                    errorMessage = e.message ?: "Failed to refresh profile"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }
@@ -99,7 +100,7 @@ class ProfileViewModel(
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "Logout failed"
+                    errorMessage = e.toBackendMessage()
                 )
             }
         }
