@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.AddLink
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -63,12 +64,14 @@ fun CollectionDetailScreen(
     canViewFlashcards: Boolean,
     canCreateFlashcards: Boolean,
     canUpdateFlashcards: Boolean,
-    canDeleteFlashcards: Boolean
+    canUpdateCollection: Boolean,
+    canDeleteCollection: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var flashcardIdToDelete by remember { mutableStateOf<Int?>(null) }
+    var showAttachDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.isDeleteSuccess) {
         if (uiState.isDeleteSuccess) {
@@ -81,6 +84,12 @@ fun CollectionDetailScreen(
             if (!uiState.isLoading && uiState.collection != null) {
                 snackbarHostState.showSnackbar(it)
             }
+        }
+    }
+    LaunchedEffect(uiState.successMessage) {
+        uiState.successMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearMessages()
         }
     }
 
@@ -121,6 +130,18 @@ fun CollectionDetailScreen(
         )
     }
 
+    if (showAttachDialog) {
+        CollectionFlashcardPickerDialog(
+            flashcards = uiState.availableFlashcards,
+            selectedIds = uiState.selectedFlashcardIds,
+            isLoading = uiState.isLoadingAvailableFlashcards,
+            isSaving = uiState.isUpdatingFlashcards,
+            onToggle = viewModel::toggleFlashcardSelection,
+            onConfirm = { viewModel.attachSelectedFlashcards { showAttachDialog = false } },
+            onDismiss = { showAttachDialog = false }
+        )
+    }
+
     Scaffold(
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
@@ -130,11 +151,21 @@ fun CollectionDetailScreen(
                 onRefreshClick = viewModel::loadCollectionDetail,
                 actions = {
                     uiState.collection?.let { collection ->
-                        IconButton(onClick = { onEditClick(collection.id) }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edit Collection")
+                        if (canUpdateCollection) {
+                            IconButton(onClick = {
+                                showAttachDialog = true
+                                viewModel.loadAvailableFlashcards()
+                            }) {
+                                Icon(Icons.Default.AddLink, contentDescription = "Attach Flashcards")
+                            }
+                            IconButton(onClick = { onEditClick(collection.id) }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Edit Collection")
+                            }
                         }
-                        IconButton(onClick = { showDeleteDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete Collection", tint = MaterialTheme.colorScheme.error)
+                        if (canDeleteCollection) {
+                            IconButton(onClick = { showDeleteDialog = true }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Delete Collection", tint = MaterialTheme.colorScheme.error)
+                            }
                         }
                     }
                 }
@@ -156,11 +187,11 @@ fun CollectionDetailScreen(
         
         flashcardIdToDelete?.let { flashcardId ->
             com.vu.englishlearningapp.ui.screens.admin.flashcard.DeleteConfirmationDialog(
-                title = "Delete Flashcard?",
-                message = "Are you sure you want to delete this flashcard? This action cannot be undone.",
-                isDeleting = uiState.isLoading,
+                title = "Remove Flashcard?",
+                message = "Remove this flashcard from the collection? The flashcard will remain available in the system.",
+                isDeleting = uiState.isUpdatingFlashcards,
                 onConfirm = {
-                    viewModel.deleteFlashcard(flashcardId)
+                    viewModel.detachFlashcard(flashcardId)
                     flashcardIdToDelete = null
                 },
                 onDismiss = { flashcardIdToDelete = null }
@@ -253,7 +284,7 @@ fun CollectionDetailScreen(
                                 onEditClick = if (canUpdateFlashcards) ({
                                     onEditFlashcardClick(collection.id, flashcard.id)
                                 }) else null,
-                                onDeleteClick = if (canDeleteFlashcards) ({
+                                onDeleteClick = if (canUpdateCollection) ({
                                     flashcardIdToDelete = flashcard.id
                                 }) else null
                             )

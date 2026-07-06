@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -50,7 +52,8 @@ fun CollectionListScreen(
     viewModel: CollectionListViewModel,
     onCollectionClick: (Int) -> Unit,
     onCreateClick: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    canCreate: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -78,8 +81,10 @@ fun CollectionListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onCreateClick) {
-                Icon(Icons.Default.Add, contentDescription = "Create Collection")
+            if (canCreate) {
+                FloatingActionButton(onClick = onCreateClick) {
+                    Icon(Icons.Default.Add, contentDescription = "Create Collection")
+                }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -187,6 +192,23 @@ fun CollectionListScreen(
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
+                                }
+                            }
+                            item {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    OutlinedButton(
+                                        onClick = viewModel::previousPage,
+                                        enabled = uiState.currentPage > 1 && !uiState.isLoading
+                                    ) { Text("Previous") }
+                                    Text("${uiState.currentPage} / ${uiState.lastPage}")
+                                    OutlinedButton(
+                                        onClick = viewModel::nextPage,
+                                        enabled = uiState.currentPage < uiState.lastPage && !uiState.isLoading
+                                    ) { Text("Next") }
                                 }
                             }
                         }

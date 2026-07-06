@@ -13,13 +13,14 @@ import kotlinx.coroutines.launch
 
 data class CollectionListUiState(
     val collections: List<FlashcardCollectionDto> = emptyList(),
+    val searchQuery: String = "",
+    val currentPage: Int = 1,
+    val lastPage: Int = 1,
+    val total: Int = 0,
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null
-) {
-    // For UI search bar
-    var searchQuery = ""
-}
+)
 
 class CollectionListViewModel(
     private val collectionRepository: CollectionRepository
@@ -32,13 +33,16 @@ class CollectionListViewModel(
         loadCollections()
     }
 
-    fun loadCollections() {
+    fun loadCollections(page: Int = _uiState.value.currentPage) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
-                val collections = collectionRepository.getCollections()
+                val (collections, meta) = collectionRepository.getCollections(page)
                 _uiState.value = _uiState.value.copy(
                     collections = collections,
+                    currentPage = meta?.currentPage ?: page,
+                    lastPage = meta?.lastPage ?: 1,
+                    total = meta?.total ?: collections.size,
                     isLoading = false
                 )
             } catch (e: Exception) {
@@ -54,9 +58,13 @@ class CollectionListViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isRefreshing = true, errorMessage = null)
             try {
-                val collections = collectionRepository.getCollections()
+                val currentPage = _uiState.value.currentPage
+                val (collections, meta) = collectionRepository.getCollections(currentPage)
                 _uiState.value = _uiState.value.copy(
                     collections = collections,
+                    currentPage = meta?.currentPage ?: currentPage,
+                    lastPage = meta?.lastPage ?: 1,
+                    total = meta?.total ?: collections.size,
                     isRefreshing = false
                 )
             } catch (e: Exception) {
@@ -69,8 +77,17 @@ class CollectionListViewModel(
     }
 
     fun updateSearchQuery(query: String) {
-        val current = _uiState.value
-        _uiState.value = current.copy().apply { searchQuery = query }
+        _uiState.value = _uiState.value.copy(searchQuery = query)
+    }
+
+    fun previousPage() {
+        val page = _uiState.value.currentPage
+        if (page > 1) loadCollections(page - 1)
+    }
+
+    fun nextPage() {
+        val state = _uiState.value
+        if (state.currentPage < state.lastPage) loadCollections(state.currentPage + 1)
     }
 
     class Factory(

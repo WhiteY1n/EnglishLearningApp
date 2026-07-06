@@ -871,30 +871,46 @@ fun AppNavGraph(
         }
 
         composable(Screen.AdminCollectionList.route) {
-            val vm: CollectionListViewModel = viewModel(
-                factory = CollectionListViewModel.Factory(appContainer.collectionRepository)
-            )
-            CollectionListScreen(
-                viewModel = vm,
-                onCollectionClick = { id ->
-                    navController.navigate(Screen.AdminCollectionDetail.createRoute(id))
-                },
-                onCreateClick = {
-                    navController.navigate(Screen.AdminCreateCollection.route)
-                },
+            PermissionGuard(
+                permissionName = "flashcard_collection.view",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                val vm: CollectionListViewModel = viewModel(
+                    factory = CollectionListViewModel.Factory(appContainer.collectionRepository)
+                )
+                CollectionListScreen(
+                    viewModel = vm,
+                    onCollectionClick = { id ->
+                        navController.navigate(Screen.AdminCollectionDetail.createRoute(id))
+                    },
+                    onCreateClick = {
+                        navController.navigate(Screen.AdminCreateCollection.route)
+                    },
+                    onBackClick = { navController.popBackStack() },
+                    canCreate = permissionViewModel.hasPermission("flashcard_collection.create")
+                )
+            }
         }
 
         composable(
             route = Screen.AdminCollectionDetail.route,
             arguments = listOf(navArgument("id") { type = NavType.IntType })
         ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getInt("id") ?: 0
-            val vm: CollectionDetailViewModel = viewModel(
-                factory = CollectionDetailViewModel.Factory(appContainer.collectionRepository, appContainer.flashcardRepository, id)
-            )
-            CollectionDetailScreen(
+            PermissionGuard(
+                permissionName = "flashcard_collection.view",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
+                onBackClick = { navController.popBackStack() }
+            ) {
+                val id = backStackEntry.arguments?.getInt("id") ?: return@PermissionGuard
+                val vm: CollectionDetailViewModel = viewModel(
+                    factory = CollectionDetailViewModel.Factory(appContainer.collectionRepository, appContainer.flashcardRepository, id)
+                )
+                CollectionDetailScreen(
                 viewModel = vm,
                 onEditClick = { collectionId ->
                     navController.navigate(Screen.AdminEditCollection.createRoute(collectionId))
@@ -912,15 +928,24 @@ fun AppNavGraph(
                 canViewFlashcards = permissionViewModel.hasPermission("flashcard.view"),
                 canCreateFlashcards = permissionViewModel.hasPermission("flashcard.create"),
                 canUpdateFlashcards = permissionViewModel.hasPermission("flashcard.update"),
-                canDeleteFlashcards = permissionViewModel.hasPermission("flashcard.delete")
-            )
+                    canUpdateCollection = permissionViewModel.hasPermission("flashcard_collection.update"),
+                    canDeleteCollection = permissionViewModel.hasPermission("flashcard_collection.delete")
+                )
+            }
         }
 
         composable(Screen.AdminCreateCollection.route) {
-            val vm: CreateEditCollectionViewModel = viewModel(
-                factory = CreateEditCollectionViewModel.Factory(appContainer.collectionRepository, null)
-            )
-            CreateCollectionScreen(
+            PermissionGuard(
+                permissionName = "flashcard_collection.create",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
+                onBackClick = { navController.popBackStack() }
+            ) {
+                val vm: CreateEditCollectionViewModel = viewModel(
+                    factory = CreateEditCollectionViewModel.Factory(appContainer.collectionRepository, null)
+                )
+                CreateCollectionScreen(
                 viewModel = vm,
                 onSaveSuccess = {
                     navController.popBackStack()
@@ -928,7 +953,8 @@ fun AppNavGraph(
                 onCancelClick = {
                     navController.popBackStack()
                 }
-            )
+                )
+            }
         }
 
         composable(Screen.AdminFlashcardList.route) { backStackEntry ->
@@ -1141,11 +1167,18 @@ fun AppNavGraph(
             route = Screen.AdminEditCollection.route,
             arguments = listOf(navArgument("id") { type = NavType.IntType })
         ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getInt("id") ?: 0
-            val vm: CreateEditCollectionViewModel = viewModel(
-                factory = CreateEditCollectionViewModel.Factory(appContainer.collectionRepository, id)
-            )
-            EditCollectionScreen(
+            PermissionGuard(
+                permissionName = "flashcard_collection.update",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
+                onBackClick = { navController.popBackStack() }
+            ) {
+                val id = backStackEntry.arguments?.getInt("id") ?: return@PermissionGuard
+                val vm: CreateEditCollectionViewModel = viewModel(
+                    factory = CreateEditCollectionViewModel.Factory(appContainer.collectionRepository, id)
+                )
+                EditCollectionScreen(
                 viewModel = vm,
                 onSaveSuccess = {
                     navController.popBackStack()
@@ -1153,7 +1186,8 @@ fun AppNavGraph(
                 onCancelClick = {
                     navController.popBackStack()
                 }
-            )
+                )
+            }
         }
 
         composable(

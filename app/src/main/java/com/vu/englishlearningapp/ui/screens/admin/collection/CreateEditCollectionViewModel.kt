@@ -17,6 +17,7 @@ data class CreateEditCollectionUiState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val errorMessage: String? = null,
+    val successMessage: String? = null,
     val saveSuccess: Boolean = false
 )
 
@@ -73,7 +74,7 @@ class CreateEditCollectionViewModel(
         viewModelScope.launch {
             _uiState.value = current.copy(isSaving = true, errorMessage = null)
             try {
-                if (collectionId == null) {
+                val result = if (collectionId == null) {
                     // Create new
                     collectionRepository.createCollection(
                         name = current.name.trim(),
@@ -87,7 +88,11 @@ class CreateEditCollectionViewModel(
                         description = current.description.trim().takeIf { it.isNotEmpty() }
                     )
                 }
-                _uiState.value = _uiState.value.copy(isSaving = false, saveSuccess = true)
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    saveSuccess = true,
+                    successMessage = result.message
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,

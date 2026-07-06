@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -85,6 +87,7 @@ fun FlashcardFormScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
                 // Original Word
                 OutlinedTextField(
@@ -116,6 +119,18 @@ fun FlashcardFormScreen(
                         }
                     },
                     singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = uiState.explanation,
+                    onValueChange = viewModel::updateExplanation,
+                    label = { Text("Explanation (Optional)") },
+                    placeholder = { Text("Add a short explanation or usage note") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    maxLines = 6
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

@@ -5,6 +5,7 @@ import com.vu.englishlearningapp.data.remote.dto.flashcard.WordTypeDto
 data class FlashcardFormUiState(
     val originalWord: String = "",
     val translatedWord: String = "",
+    val explanation: String = "",
     val selectedWordTypeId: Int? = null,
     val wordTypes: List<WordTypeDto> = emptyList(),
     val isLoadingWordTypes: Boolean = false,

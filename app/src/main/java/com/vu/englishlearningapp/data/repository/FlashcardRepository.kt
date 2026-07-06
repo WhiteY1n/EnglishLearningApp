@@ -79,19 +79,21 @@ class FlashcardRepository(private val flashcardApi: FlashcardApi) {
     suspend fun createFlashcard(
         originalWord: String,
         translatedWord: String,
-        wordTypeId: Int
+        wordTypeId: Int,
+        explanation: String?
     ): BackendResult<FlashcardDto> = flashcardApi.createFlashcard(
-        FlashcardRequestDto(originalWord, translatedWord, wordTypeId)
+        FlashcardRequestDto(originalWord, translatedWord, wordTypeId, explanation)
     ).requireBackendData()
 
     suspend fun updateFlashcard(
         id: Int,
         originalWord: String,
         translatedWord: String,
-        wordTypeId: Int
+        wordTypeId: Int,
+        explanation: String?
     ): BackendResult<FlashcardDto> = flashcardApi.updateFlashcard(
         id,
-        FlashcardRequestDto(originalWord, translatedWord, wordTypeId)
+        FlashcardRequestDto(originalWord, translatedWord, wordTypeId, explanation)
     ).requireBackendData()
 
     suspend fun deleteFlashcard(id: Int): BackendActionResult =

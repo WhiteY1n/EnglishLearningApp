@@ -9,6 +9,7 @@ data class FlashcardDto(
     @SerializedName("id") val id: Int,
     @SerializedName("original_word") val originalWord: String,
     @SerializedName("translated_word") val translatedWord: String,
+    @SerializedName("explanation") val explanation: String? = null,
     @SerializedName("created_at") val createdAt: String,
     @SerializedName("updated_at") val updatedAt: String,
     @SerializedName("word_type") val wordType: WordTypeDto? = null

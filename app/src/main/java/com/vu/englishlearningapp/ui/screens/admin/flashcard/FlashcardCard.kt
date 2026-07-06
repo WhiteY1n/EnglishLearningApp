@@ -75,13 +75,14 @@ fun FlashcardCard(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            Text(
-                text = flashcard.translatedWord,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center
-            )
+            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = flashcard.translatedWord,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
 
             Row {
                 onEditClick?.let { editClick ->

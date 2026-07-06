@@ -8,5 +8,6 @@ import com.google.gson.annotations.SerializedName
 data class FlashcardRequestDto(
     @SerializedName("original_word") val originalWord: String,
     @SerializedName("translated_word") val translatedWord: String,
-    @SerializedName("word_type_id") val wordTypeId: Int
+    @SerializedName("word_type_id") val wordTypeId: Int,
+    @SerializedName("explanation") val explanation: String? = null
 )

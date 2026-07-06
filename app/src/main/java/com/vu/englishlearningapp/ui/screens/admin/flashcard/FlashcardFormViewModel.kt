@@ -41,6 +41,7 @@ class FlashcardFormViewModel(
                     _uiState.value = _uiState.value.copy(
                         originalWord = flashcard.originalWord,
                         translatedWord = flashcard.translatedWord,
+                        explanation = flashcard.explanation.orEmpty(),
                         selectedWordTypeId = flashcard.wordType?.id,
                         isLoadingFlashcard = false
                     )
@@ -65,6 +66,10 @@ class FlashcardFormViewModel(
         clearError("translatedWord")
     }
 
+    fun updateExplanation(value: String) {
+        _uiState.value = _uiState.value.copy(explanation = value, errorMessage = null)
+    }
+
     fun updateWordType(typeId: Int) {
         _uiState.value = _uiState.value.copy(selectedWordTypeId = typeId)
         clearError("wordType")
@@ -82,6 +87,7 @@ class FlashcardFormViewModel(
 
         val original = state.originalWord.trim()
         val translated = state.translatedWord.trim()
+        val explanation = state.explanation.trim().takeIf { it.isNotEmpty() }
         val wordTypeId = state.selectedWordTypeId
 
         // Validation
@@ -100,7 +106,12 @@ class FlashcardFormViewModel(
             try {
                 if (flashcardId == null) {
                     // Create mode
-                    val result = flashcardRepository.createFlashcard(original, translated, wordTypeId!!)
+                    val result = flashcardRepository.createFlashcard(
+                        original,
+                        translated,
+                        wordTypeId!!,
+                        explanation
+                    )
                     collectionId?.let { id ->
                         flashcardRepository.attachToCollection(id, listOf(result.data.id))
                     }
@@ -111,7 +122,8 @@ class FlashcardFormViewModel(
                         flashcardId,
                         original,
                         translated,
-                        wordTypeId!!
+                        wordTypeId!!,
+                        explanation
                     )
                     _uiState.value = _uiState.value.copy(successMessage = result.message)
                 }
