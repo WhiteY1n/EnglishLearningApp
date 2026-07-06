@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
+import com.vu.englishlearningapp.ui.components.AppDatePickerField
 import com.vu.englishlearningapp.core.network.toAssetUrl
 import com.vu.englishlearningapp.core.network.getFileName
 import coil.compose.AsyncImage
@@ -199,19 +200,11 @@ fun EditProfileScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Birthday (editable, required)
-            // Using a simple text field for now. Format: YYYY-MM-DD
-            OutlinedTextField(
+            AppDatePickerField(
                 value = uiState.birthday,
                 onValueChange = viewModel::onBirthdayChange,
-                label = { Text("Birthday *") },
-                placeholder = { Text("YYYY-MM-DD") },
-                singleLine = true,
-                isError = uiState.birthdayError != null,
-                supportingText = uiState.birthdayError?.let { error ->
-                    { Text(error, color = MaterialTheme.colorScheme.error) }
-                },
-                modifier = Modifier.fillMaxWidth(),
+                label = "Birthday *",
+                error = uiState.birthdayError,
                 enabled = !uiState.isSaving
             )
 

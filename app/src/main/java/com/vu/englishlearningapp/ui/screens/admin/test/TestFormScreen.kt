@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
+import com.vu.englishlearningapp.ui.components.AppDatePickerField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -277,14 +278,11 @@ private fun DateTimeField(
     error: String?,
     onValueChange: (String) -> Unit
 ) {
-    OutlinedTextField(
+    AppDatePickerField(
         value = value,
         onValueChange = onValueChange,
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text(label) },
-        placeholder = { Text("yyyy-MM-dd HH:mm:ss") },
-        isError = error != null,
-        supportingText = { Text(error ?: "Format: yyyy-MM-dd HH:mm:ss") },
-        singleLine = true
+        label = label,
+        error = error,
+        includeTime = true
     )
 }

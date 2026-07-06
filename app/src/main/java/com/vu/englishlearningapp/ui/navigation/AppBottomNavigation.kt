@@ -65,7 +65,7 @@ private val bottomNavigationItems = listOf(
             Screen.QuizTaking.route,
             Screen.QuizResult.route
         ),
-        requiredPermission = "quizzies.view"
+        requiredPermission = "collection_test.view"
     ),
     BottomNavigationItem(
         label = "History",

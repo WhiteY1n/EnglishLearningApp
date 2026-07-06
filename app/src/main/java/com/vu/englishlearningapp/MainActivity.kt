@@ -64,12 +64,14 @@ class MainActivity : ComponentActivity() {
                         initial = if (startDestination == Screen.Home.route) "" else null
                     )
                     val showBottomNavigation = currentRoute != null &&
-                        currentRoute != Screen.Login.route
+                        currentRoute != Screen.Login.route &&
+                        currentRoute != Screen.Register.route
 
                     LaunchedEffect(accessToken, currentRoute) {
                         if (accessToken == null &&
                             currentRoute != null &&
-                            currentRoute != Screen.Login.route
+                            currentRoute != Screen.Login.route &&
+                            currentRoute != Screen.Register.route
                         ) {
                             navController.navigateToLogin()
                         }

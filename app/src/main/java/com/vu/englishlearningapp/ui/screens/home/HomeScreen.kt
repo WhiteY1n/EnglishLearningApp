@@ -55,17 +55,8 @@ fun HomeScreen(
         PermissionHelper(uiState.user)
     }
     val canViewFlashcards = permissionHelper.checkPermission("flashcard.view")
-    val canViewQuizzes = permissionHelper.checkPermission("quizzies.view")
-    val canAccessAdminDashboard = listOf(
-        "flashcard_collection.view",
-        "flashcard.view",
-        "question.view",
-        "collection_test.view",
-        "user_test_attempt.view",
-        "user.view",
-        "permission.view",
-        "role.view"
-    ).any(permissionHelper::checkPermission)
+    val canViewQuizzes = permissionHelper.checkPermission("collection_test.view")
+    val canAccessAdminDashboard = permissionHelper.checkPermission("admin_dashboard.view")
 
     LaunchedEffect(canViewFlashcards, canViewQuizzes, canAccessAdminDashboard) {
         val selectedCategoryAvailable = when (selectedCategory) {

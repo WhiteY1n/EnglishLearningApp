@@ -30,6 +30,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,15 +50,18 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val LoginPrimary = Color(0xFF3452FF)
-private val LoginText = Color(0xFF181A20)
-private val LoginSecondaryText = Color(0xFF7B8191)
+internal val LoginPrimary = Color(0xFF3452FF)
+internal val LoginText = Color(0xFF181A20)
+internal val LoginSecondaryText = Color(0xFF7B8191)
 private val LoginBorder = Color(0xFFD8DCE5)
 
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onRegisterClick: () -> Unit,
+    registrationMessage: String?,
+    onRegistrationMessageShown: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -71,6 +75,12 @@ fun LoginScreen(
         uiState.errorMessage?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.clearErrorMessage()
+        }
+    }
+    LaunchedEffect(registrationMessage) {
+        registrationMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            onRegistrationMessageShown()
         }
     }
 
@@ -182,7 +192,16 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(Modifier.height(96.dp))
+            Spacer(Modifier.height(14.dp))
+            TextButton(
+                onClick = onRegisterClick,
+                enabled = !uiState.isLoading,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Create an account", color = LoginPrimary, fontWeight = FontWeight.Medium)
+            }
+
+            Spacer(Modifier.height(64.dp))
             Column(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 28.dp),
                 verticalArrangement = Arrangement.Center
@@ -200,7 +219,7 @@ fun LoginScreen(
 }
 
 @Composable
-private fun LoginFieldLabel(text: String) {
+internal fun LoginFieldLabel(text: String) {
     Text(
         text = text,
         color = LoginText,
@@ -210,7 +229,7 @@ private fun LoginFieldLabel(text: String) {
 }
 
 @Composable
-private fun loginFieldColors() = OutlinedTextFieldDefaults.colors(
+internal fun loginFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedBorderColor = LoginPrimary,
     unfocusedBorderColor = LoginBorder,
     focusedContainerColor = Color.White,

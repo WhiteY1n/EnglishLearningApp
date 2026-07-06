@@ -44,6 +44,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.vu.englishlearningapp.core.network.getFileName
 import com.vu.englishlearningapp.ui.components.AppTopNavigationBar
+import com.vu.englishlearningapp.ui.components.AppDatePickerField
 
 @Composable
 fun UserFormScreen(
@@ -149,13 +150,10 @@ fun UserFormScreen(
                 )
             }
             item {
-                OutlinedTextField(
+                AppDatePickerField(
                     value = uiState.birthday,
                     onValueChange = viewModel::updateBirthday,
-                    label = { Text("Birthday") },
-                    placeholder = { Text("YYYY-MM-DD") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    label = "Birthday"
                 )
             }
             item {

@@ -22,6 +22,8 @@ import com.vu.englishlearningapp.core.permission.PermissionViewModel
 import com.vu.englishlearningapp.ui.components.PermissionGuard
 import com.vu.englishlearningapp.ui.screens.auth.LoginScreen
 import com.vu.englishlearningapp.ui.screens.auth.LoginViewModel
+import com.vu.englishlearningapp.ui.screens.auth.RegisterScreen
+import com.vu.englishlearningapp.ui.screens.auth.RegisterViewModel
 import com.vu.englishlearningapp.ui.screens.admin.dashboard.AdminDashboardScreen
 import com.vu.englishlearningapp.ui.screens.admin.dashboard.DashboardViewModel
 import com.vu.englishlearningapp.ui.screens.admin.users.UserManagementScreen
@@ -134,10 +136,13 @@ fun AppNavGraph(
     ) {
         // --- Auth ---
 
-        composable(Screen.Login.route) {
+        composable(Screen.Login.route) { backStackEntry ->
             val loginViewModel: LoginViewModel = viewModel(
                 factory = LoginViewModel.Factory(appContainer.authRepository)
             )
+            val registrationMessage by backStackEntry.savedStateHandle
+                .getStateFlow<String?>("registration_message", null)
+                .collectAsState()
             LoginScreen(
                 viewModel = loginViewModel,
                 onLoginSuccess = {
@@ -145,7 +150,27 @@ fun AppNavGraph(
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
+                },
+                onRegisterClick = { navController.navigate(Screen.Register.route) },
+                registrationMessage = registrationMessage,
+                onRegistrationMessageShown = {
+                    backStackEntry.savedStateHandle["registration_message"] = null
                 }
+            )
+        }
+
+        composable(Screen.Register.route) {
+            val registerViewModel: RegisterViewModel = viewModel(
+                factory = RegisterViewModel.Factory(appContainer.authRepository)
+            )
+            RegisterScreen(
+                viewModel = registerViewModel,
+                onRegisterSuccess = { message ->
+                    navController.previousBackStackEntry?.savedStateHandle
+                        ?.set("registration_message", message)
+                    navController.popBackStack()
+                },
+                onBackToLogin = { navController.popBackStack() }
             )
         }
 
@@ -227,7 +252,7 @@ fun AppNavGraph(
 
         composable(Screen.QuizList.route) {
             PermissionGuard(
-                permissionName = "quizzies.view",
+                permissionName = "collection_test.view",
                 permissionState = permissionState,
                 hasPermission = permissionViewModel::hasPermission,
                 onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
@@ -251,7 +276,7 @@ fun AppNavGraph(
             arguments = listOf(navArgument("testId") { type = NavType.IntType })
         ) { backStackEntry ->
             PermissionGuard(
-                permissionName = "quizzies.view",
+                permissionName = "collection_test.view",
                 permissionState = permissionState,
                 hasPermission = permissionViewModel::hasPermission,
                 onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
@@ -479,33 +504,35 @@ fun AppNavGraph(
         // --- Admin Flow ---
 
         composable(Screen.AdminDashboard.route) {
-            val vm: DashboardViewModel = viewModel(
-                factory = DashboardViewModel.Factory()
-            )
-            // Pre-fill user state from HomeScreen / TokenManager logic if available
-            // Alternatively, we get the current user from authRepository, but we can pass it down via HomeViewModel state earlier,
-            // or we just fetch it from TokenManager. Here we can let DashboardViewModel be simple.
-            // For now, since user info is in TokenManager or AuthRepo, let's inject it or leave it.
-            // Actually, HomeViewModel has the user. We can retrieve it if we need.
-            val homeEntry = navController.previousBackStackEntry
-            val homeVm = homeEntry?.let {
-                try {
-                    ViewModelProvider(it, HomeViewModel.Factory(
-                        appContainer.authRepository
-                    ))[HomeViewModel::class.java]
-                } catch (_: Exception) { null }
-            }
-            homeVm?.uiState?.value?.user?.let { user ->
-                vm.setUser(user)
-            }
-
-            AdminDashboardScreen(
-                viewModel = vm,
-                onNavigateToRoute = { route ->
-                    navController.navigate(route)
-                },
+            PermissionGuard(
+                permissionName = "admin_dashboard.view",
+                permissionState = permissionState,
+                hasPermission = permissionViewModel::hasPermission,
+                onRetry = { permissionViewModel.loadPermissions(forceRefresh = true) },
                 onBackClick = { navController.popBackStack() }
-            )
+            ) {
+                val vm: DashboardViewModel = viewModel(
+                    factory = DashboardViewModel.Factory()
+                )
+                val homeEntry = navController.previousBackStackEntry
+                val homeVm = homeEntry?.let {
+                    try {
+                        ViewModelProvider(
+                            it,
+                            HomeViewModel.Factory(appContainer.authRepository)
+                        )[HomeViewModel::class.java]
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+                homeVm?.uiState?.value?.user?.let(vm::setUser)
+
+                AdminDashboardScreen(
+                    viewModel = vm,
+                    onNavigateToRoute = navController::navigate,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(Screen.AdminUserManagement.route) { backStackEntry ->

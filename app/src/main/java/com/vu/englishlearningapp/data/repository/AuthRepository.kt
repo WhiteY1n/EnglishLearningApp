@@ -5,6 +5,9 @@ import com.vu.englishlearningapp.data.remote.api.AuthApi
 import com.vu.englishlearningapp.data.remote.dto.auth.LoginRequest
 import com.vu.englishlearningapp.data.remote.dto.auth.LoginResponse
 import com.vu.englishlearningapp.data.remote.dto.auth.UserDto
+import com.vu.englishlearningapp.data.remote.dto.auth.RegisterRequest
+import com.vu.englishlearningapp.core.network.BackendResult
+import com.vu.englishlearningapp.core.network.requireBackendData
 
 /**
  * Repository that handles authentication operations.
@@ -33,6 +36,9 @@ class AuthRepository(
 
         return data
     }
+
+    suspend fun register(request: RegisterRequest): BackendResult<UserDto> =
+        authApi.register(request).requireBackendData()
 
     /**
      * Get the currently authenticated user's profile.

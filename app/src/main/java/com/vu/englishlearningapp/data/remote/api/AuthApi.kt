@@ -4,6 +4,7 @@ import com.vu.englishlearningapp.data.remote.dto.auth.ApiResponse
 import com.vu.englishlearningapp.data.remote.dto.auth.LoginRequest
 import com.vu.englishlearningapp.data.remote.dto.auth.LoginResponse
 import com.vu.englishlearningapp.data.remote.dto.auth.RefreshTokenRequest
+import com.vu.englishlearningapp.data.remote.dto.auth.RegisterRequest
 import com.vu.englishlearningapp.data.remote.dto.auth.UserDto
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -17,6 +18,9 @@ interface AuthApi {
 
     @POST("api/admin/auth/login")
     suspend fun login(@Body request: LoginRequest): ApiResponse<LoginResponse>
+
+    @POST("api/admin/auth/register")
+    suspend fun register(@Body request: RegisterRequest): ApiResponse<UserDto>
 
     @GET("api/admin/auth/me")
     suspend fun me(): ApiResponse<UserDto>
