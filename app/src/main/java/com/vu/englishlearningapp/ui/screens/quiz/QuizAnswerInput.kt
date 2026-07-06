@@ -66,16 +66,22 @@ private fun MultipleChoiceAnswer(
     onAnswerChanged: (String) -> Unit
 ) {
     val options = question.getOptions()
+    
+    // Remember the shuffled options with their original indices to prevent reshuffling on recomposition
+    val shuffledOptions = remember(question.id) {
+        options.mapIndexed { index, option -> index to option }.shuffled()
+    }
+    
     val selectedIndex = answer?.toIntOrNull()?.takeIf { it in options.indices }
         ?: options.indexOf(answer).takeIf { it >= 0 }
 
-    options.forEachIndexed { index, option ->
+    shuffledOptions.forEachIndexed { displayIndex, (originalIndex, option) ->
         MultipleChoiceOptionCard(
-            label = ('A'.code + index).toChar().toString(),
+            label = ('A'.code + displayIndex).toChar().toString(),
             text = option,
-            selected = selectedIndex == index,
+            selected = selectedIndex == originalIndex,
             enabled = enabled,
-            onClick = { onAnswerChanged(index.toString()) }
+            onClick = { onAnswerChanged(originalIndex.toString()) }
         )
     }
 }
@@ -221,7 +227,11 @@ private fun MatchingAnswer(
     }
     var selectedLeft by remember(question.id) { mutableStateOf<String?>(null) }
     var selectedRight by remember(question.id) { mutableStateOf<String?>(null) }
-    val rightOptions = pairs.map { it.right }.distinct()
+    
+    // Shuffle left and right options independently, remembered by question.id to avoid reshuffling on recomposition
+    val leftOptions = remember(question.id) { pairs.map { it.left }.shuffled() }
+    val rightOptions = remember(question.id) { pairs.map { it.right }.distinct().shuffled() }
+
     val pairColors = listOf(
         Color(0xFFE8F5EF) to Color(0xFF2E8B67), // Green
         Color(0xFFF1EAFB) to Color(0xFF7654A8), // Purple
@@ -254,12 +264,13 @@ private fun MatchingAnswer(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                pairs.forEachIndexed { index, pair ->
-                    val isSelected = selectedLeft == pair.left
-                    val isMatched = selections[pair.left] != null
-                    val colors = pairColors[index % pairColors.size]
+                leftOptions.forEach { left ->
+                    val isSelected = selectedLeft == left
+                    val isMatched = selections[left] != null
+                    val originalIndex = pairs.indexOfFirst { it.left == left }
+                    val colors = pairColors[originalIndex.coerceAtLeast(0) % pairColors.size]
                     MatchingChoice(
-                        text = pair.left,
+                        text = left,
                         selected = isSelected,
                         backgroundColor = if (isMatched) colors.first else Color.White,
                         borderColor = if (isMatched || isSelected) colors.second
@@ -267,23 +278,23 @@ private fun MatchingAnswer(
                         enabled = enabled,
                         onClick = {
                             val right = selectedRight
-                            val matchedRight = selections[pair.left]
+                            val matchedRight = selections[left]
                             when {
                                 right != null -> {
                                     selections.entries.firstOrNull { it.value == right }?.key?.let { key ->
                                         selections.remove(key)
                                     }
-                                    selections[pair.left] = right
+                                    selections[left] = right
                                     selectedLeft = null
                                     selectedRight = null
                                     publishAnswer()
                                 }
                                 matchedRight != null && selectedLeft == null -> {
-                                    selections.remove(pair.left)
+                                    selections.remove(left)
                                     publishAnswer()
                                 }
                                 else -> {
-                                    selectedLeft = if (selectedLeft == pair.left) null else pair.left
+                                    selectedLeft = if (selectedLeft == left) null else left
                                     selectedRight = null
                                 }
                             }
